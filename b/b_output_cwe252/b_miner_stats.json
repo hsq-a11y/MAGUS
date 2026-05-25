@@ -4,6 +4,8 @@
   "c_ready_schema_version": "stageb.c_ready_candidates.v3",
   "total_samples": 8867,
   "total_groups": 1308,
+  "groups_without_expected_features": 1300,
+  "groups_without_expected_features_ratio": 0.9939,
   "total_patterns": 11,
   "total_candidates": 8867,
   "c_ready_candidates": 2347,
@@ -16,27 +18,24 @@
   "c_ready_priority_policy": {
     "objective": "front_load_likely_stage_c_p0_p1_p2_under_time_budget",
     "base_weights": {
-      "threshold_pass": 100.0,
+      "threshold_pass": 2.0,
       "risk_score": 10.0,
       "sink_score": 2.0,
-      "pattern_deviation_score": 1.0,
+      "pattern_deviation_score": 2.0,
       "rarity_score": 0.5,
       "candidate_count": 0.01,
       "static_confirmation_supported": 0.5
     },
     "positive_signal_weights": {
-      "environment_source": 8.0,
-      "stdin_source": 8.0,
+      "environment_source": 4.0,
+      "stdin_source": 4.0,
       "network_source_or_sink": 2.0,
       "network_receive_call": 1.4,
       "network_setup_call": 2.0,
-      "external_memory_sink": 2.0,
-      "candidate_count_ge_8": 1.0,
-      "candidate_count_ge_12": 2.0
+      "external_memory_sink": 2.0
     },
     "demotion_weights": {
       "main_dispatch_route": -5.0,
-      "relative_path_route": -10.0,
       "filesystem_file_source_without_external_input": -5.0,
       "filesystem_sink_without_external_input": -5.0
     },
@@ -53,8 +52,9 @@
     "excludes": [
       "Stage C output",
       "Stage D output",
-      "Juliet bad/good labels",
-      "sanitization map labels"
+      "benchmark answer labels",
+      "sanitization reverse maps",
+      "evaluation outputs"
     ]
   },
   "static_confirmation_support_policy": {
@@ -62,20 +62,20 @@
     "min_pattern_deviation_score": 0.4
   },
   "candidate_sort_order": [
-    "threshold_pass_desc",
-    "rarity_score_desc",
+    "risk_score_desc",
     "pattern_deviation_score_desc",
     "sink_score_desc",
-    "risk_score_desc",
+    "rarity_score_desc",
+    "threshold_pass_desc",
     "missing_feature_count_desc"
   ],
   "c_ready_sort_order": [
     "c_priority_score_desc",
-    "route_aggregated_threshold_pass_desc",
     "max_risk_score_desc",
     "max_sink_score_desc",
     "max_pattern_deviation_score_desc",
     "max_rarity_score_desc",
+    "route_aggregated_threshold_pass_desc",
     "candidate_count_desc"
   ],
   "passed_threshold": 0,

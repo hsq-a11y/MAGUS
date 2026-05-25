@@ -295,10 +295,13 @@ PROPOSER_PROMPT = """你是一位红队安全审计专家。基于以下代码�
 {evidence_brief}
 
 **任务**：
-- 如果存在安全漏洞（如缓冲区溢出、整数溢出、空指针解引用、权限缺失、SQL注入等），输出漏洞描述、CWE编号、**假设条件集合**、**触发路径**、攻击前提条件，以及对漏洞存在的置信度（0~1）。
-- 如果确定没有任何漏洞，输出 "NO_VULNERABILITY_FOUND"。
+- 必须按两步判断：第一步判断代码是否违反 C/C++ API contract 或 CWE 定义；第二步单独判断可利用性、影响范围和风险高低。
+- 如果存在 API contract/CWE 违反（例如返回值 sentinel 检查错误、失败返回未传播、成功/失败条件反了），即使影响较低或可利用性不确定，也必须输出漏洞假设；把影响不确定写进 claim、preconditions 或 confidence，不要输出 "NO_VULNERABILITY_FOUND"。
+- 只有在确认既没有 API contract/CWE 违反、也没有其它安全问题时，才输出 "NO_VULNERABILITY_FOUND"。
+- 如果存在安全漏洞或 API misuse（如缓冲区溢出、整数溢出、空指针解引用、权限缺失、SQL注入、错误返回值检查等），输出漏洞描述、CWE编号、**假设条件集合**、**触发路径**、攻击前提条件，以及对漏洞存在的置信度（0~1）。
 - B阶段门禁和缺失feature是审计优先级/反幻觉约束，不是漏洞结论。必须用代码证据证明source、sink和可达路径；不得仅凭risk_score、threshold_pass或文件名推断漏洞。
-- 如果threshold_pass=false或缺失feature为空，仍可报告漏洞，但必须有更强的A阶段代码证据；否则倾向输出NO_VULNERABILITY_FOUND或低置信度假设。
+- 对 source/sink 型漏洞，必须证明 source、sink 和可达路径；对 API contract misuse，必须证明同一路由上的 API 调用及其错误检查/处理语义，不能因为后续崩溃或攻击后果不明显就否定 contract violation。
+- 如果threshold_pass=false或缺失feature为空，仍可报告漏洞，但必须有更强的A阶段代码证据；否则降低confidence或标记evidence_complete=false。
 - 如果B阶段P0静态确认支持为supported=false，不要给出可触发P0静态强确认的高置信结论；除非A阶段代码证据直接闭合攻击者可控source到安全敏感sink的同一路由，否则应降低confidence或标记evidence_complete=false。
 
 **输出格式（严格JSON）**：
@@ -317,7 +320,7 @@ PROPOSER_PROMPT = """你是一位红队安全审计专家。基于以下代码�
   "evidence_complete": true
 }}
 
-**注意**：即使代码中可能存在防御检查，你也必须输出假设条件和路径，不要提前过滤。"""
+**注意**：即使代码中可能存在防御检查，你也必须输出假设条件和路径，不要提前过滤。影响较弱只能降低风险/置信度，不能把明确的 API contract violation 改判为无漏洞。"""
 
 BLUE_CHALLENGER_PROMPT = """你是独立蓝队复审专家。请严格挑战红队第一轮判断，寻找误报、漏报和证据缺口。
 
@@ -330,6 +333,7 @@ BLUE_CHALLENGER_PROMPT = """你是独立蓝队复审专家。请严格挑战红�
 **任务**：
 - 如果红队已发现漏洞，检查 source/sink 或 API misuse 路径是否真实、是否可达、是否引用了不存在的代码，且是否被防御检查、错误处理、常量输入或安全路径阻断。
 - 如果红队判断为 NO_VULNERABILITY_FOUND，必须主动挑战这个结论；只要代码证据中存在具体可验证的漏洞路径或 source/API misuse 路径，就输出修正后的漏洞假设。
+- 复审时必须先判断 API contract/CWE 定义是否被违反，再判断影响和可利用性。缓冲区已初始化、后续只打印、影响较低等事实只能影响风险等级和confidence，不能否定明确的错误返回值检查或其它 API contract violation。
 - 只有发现硬矛盾（路径不可达、sink不存在、source和sink不连通、把安全路径当漏洞路径等）时，才列入 hard_contradictions。
 - 使用B阶段门禁、缺失feature和参考样本约束红队判断：这些信号只能说明优先级或异常模式，不能替代真实代码路径。
 - 如果B阶段P0静态确认支持为supported=false，必须检查红队是否把安全路径、固定字符串、错误处理或注释文字当成外部可控漏洞路径；代码证据不闭合时降低confidence或标记evidence_complete=false。
@@ -366,8 +370,9 @@ RED_REBUTTAL_PROMPT = """你是红队回应者。请回应蓝队挑战，输出�
 {challenger_json}
 
 **分流要求**：
-- 如果存在可验证漏洞路径，输出具体漏洞假设。
-- 如果无漏洞，输出 NO_VULNERABILITY_FOUND。
+- 如果存在可验证漏洞路径或 API contract/CWE violation，输出具体漏洞假设。
+- 如果代码确实违反 API contract/CWE 定义，但可利用性或后果较弱，保留漏洞假设并在 claim/final_notes 中说明影响较低或需要 D 验证；不要输出 NO_VULNERABILITY_FOUND。
+- 只有确认既不存在 contract violation，也不存在其它安全问题时，输出 NO_VULNERABILITY_FOUND。
 - 如果发现硬矛盾，写入 hard_contradictions。
 - 如果蓝队指出红队误报，必须用代码证据回应；无法回应时接受蓝队结论或降为证据不完整。
 - 如果蓝队指出红队漏报，且代码证据支持该路径，必须采纳为最终漏洞假设。
@@ -629,6 +634,318 @@ def candidate_semantic_text(cand):
     return "\n".join(str(part or "") for part in parts)
 
 
+def candidate_contract_text(cand):
+    llm = cand.get("llm_evidence", {}) if isinstance(cand.get("llm_evidence"), dict) else {}
+    parts = [cand.get("evidence_slice")]
+    cand_line = cand.get("line")
+    for item in llm.get("code_slices", []) if isinstance(llm.get("code_slices"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        roles = set(item.get("roles", []))
+        line_start = item.get("line_start")
+        line_end = item.get("line_end")
+        anchor_line = item.get("anchor_line")
+        line_matches = (
+            isinstance(cand_line, int)
+            and (
+                anchor_line == cand_line
+                or (
+                    isinstance(line_start, int)
+                    and isinstance(line_end, int)
+                    and line_start <= cand_line <= line_end
+                )
+            )
+        )
+        if "focus" in roles or line_matches:
+            parts.append(item.get("text"))
+    return "\n".join(str(part or "") for part in parts if part)
+
+
+def strip_c_comments(text):
+    without_block = re.sub(r"/\*.*?\*/", " ", str(text or ""), flags=re.DOTALL)
+    return re.sub(r"//.*", " ", without_block)
+
+
+COMPARISON_LITERAL_PATTERN = r"(?:NULL|EOF|INVALID_HANDLE_VALUE|FALSE|TRUE|-?0|-?1)"
+COMPARISON_OPERATORS = ("==", "!=", "<=", ">=", "<", ">")
+INVERT_COMPARISON_OPERATOR = {
+    "==": "==",
+    "!=": "!=",
+    "<": ">",
+    ">": "<",
+    "<=": ">=",
+    ">=": "<=",
+}
+
+NULL_FAILURE_POINTER_APIS = ("fgets", "fgetws")
+NEGATIVE_FAILURE_APIS = (
+    "fprintf",
+    "fwprintf",
+    "printf",
+    "wprintf",
+    "snprintf",
+    "_snprintf",
+    "sprintf_s",
+    "swprintf",
+    "fputs",
+    "fputws",
+    "puts",
+    "putws",
+    "fputc",
+    "fputwc",
+    "putc",
+    "putwc",
+    "putchar",
+    "putwchar",
+    "remove",
+    "_wremove",
+    "rename",
+    "_wrename",
+)
+SIZE_RETURN_APIS = ("fread", "fwrite")
+SCANF_FAMILY_APIS = (
+    "scanf",
+    "fscanf",
+    "sscanf",
+    "wscanf",
+    "fwscanf",
+    "swscanf",
+)
+INVALID_HANDLE_FAILURE_APIS = ("CreateNamedPipeA", "CreateNamedPipeW")
+BOOL_ZERO_FAILURE_APIS = ("ImpersonateNamedPipeClient", "ImpersonateSelf")
+
+
+def normalize_comparison_literal(value):
+    text = str(value or "").strip()
+    if text in {"-0", "+0"}:
+        return "0"
+    upper = text.upper()
+    if upper in {"NULL", "EOF", "INVALID_HANDLE_VALUE", "FALSE", "TRUE"}:
+        return upper
+    return text
+
+
+def api_name_pattern(api_names):
+    return "|".join(re.escape(name) for name in sorted(api_names, key=len, reverse=True))
+
+
+def iter_direct_call_comparisons(text, api_names):
+    if not text:
+        return
+    api_pattern = api_name_pattern(api_names)
+    call_left = re.compile(
+        rf"(?P<expr>\b(?P<api>{api_pattern})\s*\([^;{{}}]*\)\s*"
+        rf"(?P<op>{'|'.join(re.escape(op) for op in COMPARISON_OPERATORS)})\s*"
+        rf"(?P<literal>{COMPARISON_LITERAL_PATTERN}))",
+        re.DOTALL,
+    )
+    literal_left = re.compile(
+        rf"(?P<expr>(?P<literal>{COMPARISON_LITERAL_PATTERN})\s*"
+        rf"(?P<op>{'|'.join(re.escape(op) for op in COMPARISON_OPERATORS)})\s*"
+        rf"\b(?P<api>{api_pattern})\s*\([^;{{}}]*\))",
+        re.DOTALL,
+    )
+    for match in call_left.finditer(text):
+        yield {
+            "api": match.group("api"),
+            "op": match.group("op"),
+            "literal": normalize_comparison_literal(match.group("literal")),
+            "expr": " ".join(match.group("expr").split()),
+            "start": match.start(),
+            "end": match.end(),
+        }
+    for match in literal_left.finditer(text):
+        yield {
+            "api": match.group("api"),
+            "op": INVERT_COMPARISON_OPERATOR[match.group("op")],
+            "literal": normalize_comparison_literal(match.group("literal")),
+            "expr": " ".join(match.group("expr").split()),
+            "start": match.start(),
+            "end": match.end(),
+        }
+
+
+def nearby_condition_fragment(text, start, end, radius=220):
+    prefix_start = max(0, start - radius)
+    suffix_end = min(len(text), end + radius)
+    fragment = text[prefix_start:suffix_end]
+    return " ".join(fragment.split())
+
+
+def nearby_branch_indicates_failure(text, start, end):
+    fragment = nearby_condition_fragment(text, start, end).lower()
+    failure_markers = (
+        "fail",
+        "failed",
+        "failure",
+        "error",
+        "unable",
+        "invalid",
+        "exit(1)",
+        "abort(",
+        "perror(",
+        "return -1",
+    )
+    return any(marker in fragment for marker in failure_markers)
+
+
+def contract_finding(api, expr, expected, reason, start=0, end=0, confidence=0.75):
+    return {
+        "api": api,
+        "expr": expr,
+        "expected": expected,
+        "reason": reason,
+        "start": start,
+        "end": end,
+        "confidence": confidence,
+    }
+
+
+def direct_return_contract_findings(text):
+    findings = []
+    for cmp in iter_direct_call_comparisons(
+        text,
+        NULL_FAILURE_POINTER_APIS
+        + NEGATIVE_FAILURE_APIS
+        + SIZE_RETURN_APIS
+        + SCANF_FAMILY_APIS
+        + BOOL_ZERO_FAILURE_APIS,
+    ):
+        api = cmp["api"]
+        op = cmp["op"]
+        literal = cmp["literal"]
+        expr = cmp["expr"]
+        start = cmp["start"]
+        end = cmp["end"]
+
+        if api in NULL_FAILURE_POINTER_APIS and (
+            literal in {"EOF", "-1"} or (literal == "0" and op in {"<", "<="})
+        ):
+            findings.append(
+                contract_finding(
+                    api,
+                    expr,
+                    "check failure against NULL",
+                    "pointer-return API is compared against a numeric failure sentinel",
+                    start,
+                    end,
+                    0.82,
+                )
+            )
+            continue
+
+        if api in SIZE_RETURN_APIS and literal in {"0", "-1"} and op in {"<", "<="}:
+            findings.append(
+                contract_finding(
+                    api,
+                    expr,
+                    "compare the returned item count with the requested item count or check ferror/feof",
+                    "size_t-return API is checked for a negative failure value",
+                    start,
+                    end,
+                    0.78,
+                )
+            )
+            continue
+
+        if api in NEGATIVE_FAILURE_APIS and literal == "0" and op in {"==", ">", ">="}:
+            if nearby_branch_indicates_failure(text, start, end):
+                findings.append(
+                    contract_finding(
+                        api,
+                        expr,
+                        "check failure as a negative return value",
+                        "negative-on-failure API is treated as failed on a non-negative value",
+                        start,
+                        end,
+                        0.76,
+                    )
+                )
+            continue
+
+        if api in SCANF_FAMILY_APIS and literal == "0" and op == "==":
+            if nearby_branch_indicates_failure(text, start, end):
+                findings.append(
+                    contract_finding(
+                        api,
+                        expr,
+                        "check the returned assignment count against the expected conversion count and handle EOF",
+                        "scanf-family return value is checked against only one failure sentinel",
+                        start,
+                        end,
+                        0.68,
+                    )
+                )
+            continue
+
+        if api in BOOL_ZERO_FAILURE_APIS and literal in {"0", "FALSE"} and op in {"!=", ">"}:
+            if nearby_branch_indicates_failure(text, start, end):
+                findings.append(
+                    contract_finding(
+                        api,
+                        expr,
+                        "check failure as zero/FALSE and success as nonzero",
+                        "BOOL-return API success value is treated as the failure condition",
+                        start,
+                        end,
+                        0.76,
+                    )
+                )
+            continue
+    return findings
+
+
+def assignment_return_contract_findings(text):
+    findings = []
+    if not text:
+        return findings
+    api_pattern = api_name_pattern(INVALID_HANDLE_FAILURE_APIS)
+    assign_pattern = re.compile(
+        rf"\b(?P<var>[A-Za-z_]\w*)\s*=\s*(?:\([^;{{}}]*\)\s*)?"
+        rf"\b(?P<api>{api_pattern})\s*\(",
+        re.DOTALL,
+    )
+    for match in assign_pattern.finditer(text):
+        var = re.escape(match.group("var"))
+        window = text[match.end() : match.end() + 1800]
+        compare_pattern = re.compile(
+            rf"(?P<expr>\b{var}\s*(?P<op>==|!=)\s*NULL|NULL\s*(?P<rop>==|!=)\s*\b{var})"
+        )
+        for compare in compare_pattern.finditer(window):
+            expr = " ".join(compare.group("expr").split())
+            fragment = nearby_condition_fragment(window, compare.start(), compare.end(), radius=120)
+            if "INVALID_HANDLE_VALUE" in fragment:
+                continue
+            op = compare.group("op") or compare.group("rop")
+            findings.append(
+                contract_finding(
+                    match.group("api"),
+                    expr,
+                    "compare the returned HANDLE against INVALID_HANDLE_VALUE",
+                    f"HANDLE-return API result is compared against NULL with {op}",
+                    match.start(),
+                    match.end() + compare.end(),
+                    0.86,
+                )
+            )
+            break
+    return findings
+
+
+def return_contract_findings(cand):
+    text = strip_c_comments(candidate_contract_text(cand))
+    findings = direct_return_contract_findings(text) + assignment_return_contract_findings(text)
+    deduped = []
+    seen = set()
+    for finding in findings:
+        key = (finding.get("api"), finding.get("expr"), finding.get("expected"), finding.get("reason"))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(finding)
+    return deduped
+
+
 def unguarded_call_offset(text, api_name):
     pattern = re.compile(rf"\b{re.escape(api_name)}\s*\(")
     for match in pattern.finditer(text):
@@ -649,6 +966,33 @@ def unguarded_call_offset(text, api_name):
 
 
 def source_api_safety_net_response(cand):
+    contract_findings = return_contract_findings(cand)
+    if contract_findings:
+        finding = sorted(contract_findings, key=lambda item: -float(item.get("confidence", 0.0)))[0]
+        api = finding["api"]
+        expr = finding["expr"]
+        expected = finding["expected"]
+        reason = finding["reason"]
+        confidence = max(CONFIDENCE_THRESHOLD, float(finding.get("confidence", CONFIDENCE_THRESHOLD)))
+        return {
+            "claim": (
+                f"{api} return value check violates the API contract: `{expr}`. "
+                f"The route should {expected}; observed check indicates {reason}. "
+                "This is a CWE-253 return-value contract violation even if runtime impact is "
+                "route-dependent or low and must be verified separately."
+            ),
+            "cwe_candidates": ["CWE-253"],
+            "trigger_path": candidate_bound_trigger_path(cand),
+            "preconditions": [
+                f"{api} can return its documented failure value on this route.",
+                "The route depends on the check to distinguish success from failure.",
+            ],
+            "confidence": confidence,
+            "evidence_complete": True,
+            "stability": "source_api_contract_safety_net",
+            "_routing_reason": "source_api_contract_violation",
+        }
+
     text = candidate_semantic_text(cand)
     named_pipe_offset = unguarded_call_offset(text, "ImpersonateNamedPipeClient")
     if named_pipe_offset >= 0:
@@ -667,6 +1011,7 @@ def source_api_safety_net_response(cand):
                 "confidence": CONFIDENCE_THRESHOLD,
                 "evidence_complete": True,
                 "stability": "source_api_semantic_safety_net",
+                "_routing_reason": "source_api_semantic_safety_net",
             }
 
     if unguarded_call_offset(text, "RpcImpersonateClient") >= 0:
@@ -681,6 +1026,7 @@ def source_api_safety_net_response(cand):
             "confidence": CONFIDENCE_THRESHOLD,
             "evidence_complete": True,
             "stability": "source_api_semantic_safety_net",
+            "_routing_reason": "source_api_semantic_safety_net",
         }
     return None
 
@@ -700,7 +1046,8 @@ def route_record(cand, responses):
     if not any_vuln:
         safety_net = source_api_safety_net_response(cand)
         if safety_net:
-            return safety_net, "P1", "candidate_for_d", "source_api_semantic_safety_net", contradictions
+            reason = safety_net.get("_routing_reason", "source_api_semantic_safety_net")
+            return safety_net, "P1", "candidate_for_d", reason, contradictions
         if has_error:
             return selected, "P3", "audit_only", "stage_c_llm_error", contradictions
         return selected, "P3", "audit_only", "multi_agent_no_vulnerability", contradictions

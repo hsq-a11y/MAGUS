@@ -1,0 +1,1028 @@
+[
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_feda64faa9e7",
+    "api_group": "seed:CloseHandle",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 306,
+    "group_size": 306,
+    "support_threshold": 276,
+    "reference_sample_ids": [
+      "path_0079514b0289",
+      "path_01ac1e51a241",
+      "path_01d1d0c2a8e1",
+      "path_02487c6ade47",
+      "path_02a51090dcb7"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_f4577abc9c88",
+    "api_group": "seed:ConnectNamedPipe",
+    "feature_tokens": [
+      "call:ConnectNamedPipe->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0193d6ba1ba5",
+      "path_0194da328331",
+      "path_03b3463825f7",
+      "path_076cf4f11ce7",
+      "path_0840b7c463ab"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_701a8cd4118b",
+    "api_group": "seed:ConnectNamedPipe",
+    "feature_tokens": [
+      "check:CHECK->call:ConnectNamedPipe"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0193d6ba1ba5",
+      "path_0194da328331",
+      "path_03b3463825f7",
+      "path_076cf4f11ce7",
+      "path_0840b7c463ab"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_d3b252b90b1e",
+    "api_group": "seed:ConnectNamedPipe",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0193d6ba1ba5",
+      "path_0194da328331",
+      "path_03b3463825f7",
+      "path_076cf4f11ce7",
+      "path_0840b7c463ab"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_cb07ced3fa58",
+    "api_group": "seed:CreateMutexA",
+    "feature_tokens": [
+      "call:CreateMutexA->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0153c65cbb89",
+      "path_02c079165384",
+      "path_13f58bf0e4d2",
+      "path_15a8054dcfb4",
+      "path_218a8112eaa5"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_567f2a648fe2",
+    "api_group": "seed:CreateMutexA",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0153c65cbb89",
+      "path_02c079165384",
+      "path_13f58bf0e4d2",
+      "path_15a8054dcfb4",
+      "path_218a8112eaa5"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_a86de107d25e",
+    "api_group": "seed:CreateMutexW",
+    "feature_tokens": [
+      "call:CreateMutexW->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_09a404681d51",
+      "path_0b310d29144f",
+      "path_197a92f667b5",
+      "path_19a6f8b4ddf8",
+      "path_23e7bff6921d"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_1c3a04fb5651",
+    "api_group": "seed:CreateMutexW",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_09a404681d51",
+      "path_0b310d29144f",
+      "path_197a92f667b5",
+      "path_19a6f8b4ddf8",
+      "path_23e7bff6921d"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_300fd9b02684",
+    "api_group": "seed:CreateNamedPipeA",
+    "feature_tokens": [
+      "call:CreateNamedPipeA->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0b270fd94078",
+      "path_0ecd32b61482",
+      "path_142b6adc5a65",
+      "path_15231c4474da",
+      "path_16b791ad3366"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_824586e6da0b",
+    "api_group": "seed:CreateNamedPipeA",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0b270fd94078",
+      "path_0ecd32b61482",
+      "path_142b6adc5a65",
+      "path_15231c4474da",
+      "path_16b791ad3366"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_138b397029c9",
+    "api_group": "seed:CreateNamedPipeW",
+    "feature_tokens": [
+      "call:CreateNamedPipeW->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_03f3fcea0bb1",
+      "path_04f31755690c",
+      "path_06148929e15e",
+      "path_086a2a281b15",
+      "path_0925b3b78a6a"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_e85b17ed8a87",
+    "api_group": "seed:CreateNamedPipeW",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_03f3fcea0bb1",
+      "path_04f31755690c",
+      "path_06148929e15e",
+      "path_086a2a281b15",
+      "path_0925b3b78a6a"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_0a8da6b2f54c",
+    "api_group": "seed:ImpersonateNamedPipeClient",
+    "feature_tokens": [
+      "call:ImpersonateNamedPipeClient->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_00cba6bb6d6c",
+      "path_029111e90e93",
+      "path_047c82d50f20",
+      "path_04a4ee8afba2",
+      "path_052c82c1e664"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_3a81bbbf82db",
+    "api_group": "seed:ImpersonateNamedPipeClient",
+    "feature_tokens": [
+      "check:CHECK->call:ImpersonateNamedPipeClient"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_00cba6bb6d6c",
+      "path_029111e90e93",
+      "path_047c82d50f20",
+      "path_04a4ee8afba2",
+      "path_052c82c1e664"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_7eab2a34e8f9",
+    "api_group": "seed:ImpersonateNamedPipeClient",
+    "feature_tokens": [
+      "check:CHECK->resource:CloseHandle"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_00cba6bb6d6c",
+      "path_029111e90e93",
+      "path_047c82d50f20",
+      "path_04a4ee8afba2",
+      "path_052c82c1e664"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_3cb3d792e577",
+    "api_group": "seed:ImpersonateSelf",
+    "feature_tokens": [
+      "call:ImpersonateSelf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_04ae05ff79fc",
+      "path_05fd381e7b9c",
+      "path_0988dc76371c",
+      "path_0cb3fd0e751f",
+      "path_1a45ddceee57"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_22dd4b435272",
+    "api_group": "seed:RpcImpersonateClient",
+    "feature_tokens": [
+      "call:RpcImpersonateClient->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0e5a341a8698",
+      "path_0f48d7d7fda0",
+      "path_11e4e93a564b",
+      "path_1a0397a9768e",
+      "path_208876c3ef94"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_546755acd9c5",
+    "api_group": "seed:__isoc99_fscanf",
+    "feature_tokens": [
+      "call:__isoc99_fscanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_00b5a384c6db",
+      "path_029431ff48d0",
+      "path_02e6c5a2c922",
+      "path_03e2d9f83696",
+      "path_0910006b3ae6"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_dd985e320fa0",
+    "api_group": "seed:__isoc99_fwscanf",
+    "feature_tokens": [
+      "call:__isoc99_fwscanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0299c436fb03",
+      "path_0adb3ddd05ee",
+      "path_0e52d7e78cd8",
+      "path_0f427b8dd550",
+      "path_10e76f5776c6"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_d456a8d88539",
+    "api_group": "seed:__isoc99_scanf",
+    "feature_tokens": [
+      "call:__isoc99_scanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_03cc52361f73",
+      "path_07150d8a0918",
+      "path_0dc9bc863ba1",
+      "path_0fb1e3948a8a",
+      "path_0fe60988b9ef"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_81724f651e05",
+    "api_group": "seed:__isoc99_sscanf",
+    "feature_tokens": [
+      "call:__isoc99_sscanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_010386761813",
+      "path_081d6a6ae1b5",
+      "path_0ce7c66cab16",
+      "path_0dbbf63b2fd1",
+      "path_114e0c81b381"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_644a8f9db955",
+    "api_group": "seed:__isoc99_swscanf",
+    "feature_tokens": [
+      "call:__isoc99_swscanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_064e38f2ce7a",
+      "path_06980bf0be90",
+      "path_089effbd26fa",
+      "path_0d7b8cabc817",
+      "path_157753e96324"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_8e8555370556",
+    "api_group": "seed:__isoc99_wscanf",
+    "feature_tokens": [
+      "call:__isoc99_wscanf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0081ed3b2b64",
+      "path_062964243806",
+      "path_06d42690f4a7",
+      "path_07f247fb9cad",
+      "path_0b798a36a341"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_18844e832f42",
+    "api_group": "seed:_putws",
+    "feature_tokens": [
+      "call:_putws->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_06a62129a14a",
+      "path_0871d61bdaf0",
+      "path_0c51210b3bd7",
+      "path_0fa7c34fcf15",
+      "path_1c9335ad2273"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_c8e1cbd61597",
+    "api_group": "seed:_wremove",
+    "feature_tokens": [
+      "call:_wremove->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_00ecb0306c8f",
+      "path_057d797799ff",
+      "path_0ab9cee5b325",
+      "path_1436e8b880f3",
+      "path_1f60f78dc891"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_3d8552a9228b",
+    "api_group": "seed:_wrename",
+    "feature_tokens": [
+      "call:_wrename->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0066d64f37c0",
+      "path_1449310b01ae",
+      "path_1496ed229687",
+      "path_1d9043803c8e",
+      "path_1e082b9610a3"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_03eeae093198",
+    "api_group": "seed:fgets",
+    "feature_tokens": [
+      "call:fgets->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_03d5e041c883",
+      "path_092f78a127e4",
+      "path_0a85f15a49ef",
+      "path_0cfc17fbce13",
+      "path_0f79191b5e48"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_b482425e3a41",
+    "api_group": "seed:fgets",
+    "feature_tokens": [
+      "check:CHECK->call:printLine"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_03d5e041c883",
+      "path_092f78a127e4",
+      "path_0a85f15a49ef",
+      "path_0cfc17fbce13",
+      "path_0f79191b5e48"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_a753b6921c11",
+    "api_group": "seed:fgetws",
+    "feature_tokens": [
+      "call:fgetws->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_02937f8f5451",
+      "path_04df677d09ee",
+      "path_066e433803fa",
+      "path_068be2972134",
+      "path_0b6581239896"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_b62a8b73945a",
+    "api_group": "seed:fgetws",
+    "feature_tokens": [
+      "check:CHECK->call:printWLine"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_02937f8f5451",
+      "path_04df677d09ee",
+      "path_066e433803fa",
+      "path_068be2972134",
+      "path_0b6581239896"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_0e880ffceca6",
+    "api_group": "seed:fprintf",
+    "feature_tokens": [
+      "call:fprintf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_05754e4246c7",
+      "path_0d5123fe4501",
+      "path_10bd61e9a369",
+      "path_152e2e69d3ca",
+      "path_1802ab6f2ac5"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_c3c240c8e7b4",
+    "api_group": "seed:fputc",
+    "feature_tokens": [
+      "call:fputc->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0175d1a8ebdd",
+      "path_042bd238b5d6",
+      "path_04d50233dc4d",
+      "path_05d82414c4f2",
+      "path_0a70257296be"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_decdcc48c72f",
+    "api_group": "seed:fputs",
+    "feature_tokens": [
+      "call:fputs->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0599bda9f209",
+      "path_0777ed3df2e7",
+      "path_0949ddb8dce3",
+      "path_0a2f52994e70",
+      "path_0d5b17500dce"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_0cd11d83f11b",
+    "api_group": "seed:fputwc",
+    "feature_tokens": [
+      "call:fputwc->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_055623567c96",
+      "path_08c815e147c3",
+      "path_1635e07f9cb6",
+      "path_1b32d4c3810e",
+      "path_203431d9667f"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_ae55c66336ee",
+    "api_group": "seed:fputws",
+    "feature_tokens": [
+      "call:fputws->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_02e4aa89c55b",
+      "path_05c9d6999129",
+      "path_089018c25e00",
+      "path_0e6835326e0d",
+      "path_0f4395d5bf64"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_f67503af52e8",
+    "api_group": "seed:fread",
+    "feature_tokens": [
+      "call:fread->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0087457f09ea",
+      "path_02303956d9e2",
+      "path_025691bcb11f",
+      "path_0561922ec8f3",
+      "path_0587ca8209c6"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_760f80bcb8c1",
+    "api_group": "seed:fwprintf",
+    "feature_tokens": [
+      "call:fwprintf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_08e61a49fd12",
+      "path_0aed43aa4b30",
+      "path_0d6980814c13",
+      "path_0da92f83ac0c",
+      "path_151c07378e1f"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_4238ccfedb9e",
+    "api_group": "seed:fwrite",
+    "feature_tokens": [
+      "call:fwrite->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 102,
+    "group_size": 102,
+    "support_threshold": 92,
+    "reference_sample_ids": [
+      "path_0242b6f4c045",
+      "path_0261bc0c4801",
+      "path_02a8278ed0d8",
+      "path_04073ddaab98",
+      "path_044ea520504e"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_74af7945ac44",
+    "api_group": "seed:globalReturnsFalse",
+    "feature_tokens": [
+      "call:globalReturnsFalse->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 38,
+    "group_size": 38,
+    "support_threshold": 35,
+    "reference_sample_ids": [
+      "path_0b9a947b7067",
+      "path_14cad258e21f",
+      "path_19a61267804e",
+      "path_1a84a529278d",
+      "path_268528e6bc4c"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_e8ab22b22a65",
+    "api_group": "seed:globalReturnsTrue",
+    "feature_tokens": [
+      "call:globalReturnsTrue->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 76,
+    "group_size": 76,
+    "support_threshold": 69,
+    "reference_sample_ids": [
+      "path_000e26d50edc",
+      "path_002739c60162",
+      "path_01fbfc0e8bb0",
+      "path_0240b584337d",
+      "path_065bffe5f92d"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_45d9b71f4773",
+    "api_group": "seed:globalReturnsTrueOrFalse",
+    "feature_tokens": [
+      "call:globalReturnsTrueOrFalse->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 76,
+    "group_size": 76,
+    "support_threshold": 69,
+    "reference_sample_ids": [
+      "path_06373932a09f",
+      "path_094eccbffb86",
+      "path_0c8fc44b9484",
+      "path_0f0d621fa07d",
+      "path_123a20e7a4c8"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_bab7028f43f9",
+    "api_group": "seed:printWLine",
+    "feature_tokens": [
+      "call:fgetws->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_036f91162fba",
+      "path_05c3f7668411",
+      "path_0de81df06a9a",
+      "path_12e2420a6cd8",
+      "path_17196f258554"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_3be7bd4030b6",
+    "api_group": "seed:printWLine",
+    "feature_tokens": [
+      "check:CHECK->call:printWLine"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_036f91162fba",
+      "path_05c3f7668411",
+      "path_0de81df06a9a",
+      "path_12e2420a6cd8",
+      "path_17196f258554"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_a47cb6955174",
+    "api_group": "seed:putc",
+    "feature_tokens": [
+      "call:putc->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_08b30e9ec285",
+      "path_11e5c4d7e9e2",
+      "path_171d58d7e7c4",
+      "path_2241d2c8c99d",
+      "path_2519eb102c0e"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_5f8a13434333",
+    "api_group": "seed:putchar",
+    "feature_tokens": [
+      "call:putchar->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_035830667011",
+      "path_09a92719fd28",
+      "path_0b0f50b05674",
+      "path_13fd6f72aa31",
+      "path_169e32776e21"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_cc4f2b4197ac",
+    "api_group": "seed:puts",
+    "feature_tokens": [
+      "call:puts->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_043f2070aa2a",
+      "path_0621a3db141d",
+      "path_0866202a312a",
+      "path_0de3504c04f4",
+      "path_0e0ba9cea13a"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_5f49efd2c4ed",
+    "api_group": "seed:putwc",
+    "feature_tokens": [
+      "call:putwc->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_01f398a2a10f",
+      "path_0ddbbd9e3c71",
+      "path_0f05c85d6273",
+      "path_0fc2733d4667",
+      "path_17c0aa061d28"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_2185ec388ad9",
+    "api_group": "seed:putwchar",
+    "feature_tokens": [
+      "call:putwchar->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_048996716161",
+      "path_04929e80895f",
+      "path_084aae5e4039",
+      "path_0b28437704ca",
+      "path_1077789b34a0"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_f69fd2c0aff5",
+    "api_group": "seed:remove",
+    "feature_tokens": [
+      "filesystem:remove->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0af30400e7b7",
+      "path_0b78afa95598",
+      "path_0e97d2c7560e",
+      "path_11e8fcce5178",
+      "path_1acbdc163d9b"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_67572025a5dd",
+    "api_group": "seed:rename",
+    "feature_tokens": [
+      "filesystem:rename->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_09240aa9d300",
+      "path_0c6d4233f854",
+      "path_0e9a52358752",
+      "path_199117c79911",
+      "path_24025aa7c23a"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_97df5a35961a",
+    "api_group": "seed:snprintf",
+    "feature_tokens": [
+      "call:snprintf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0348e7af9492",
+      "path_053d23f0671a",
+      "path_06ecb0259853",
+      "path_070f02bc286d",
+      "path_08b613103a30"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_e99bed67d097",
+    "api_group": "seed:staticReturnsFalse",
+    "feature_tokens": [
+      "call:staticReturnsFalse->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 38,
+    "group_size": 38,
+    "support_threshold": 35,
+    "reference_sample_ids": [
+      "path_0b211b0fbf22",
+      "path_0c325c0ba8c9",
+      "path_15bf04ada2e9",
+      "path_19a148b0d00c",
+      "path_1ad31671b59a"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_a8aa7ccc1437",
+    "api_group": "seed:staticReturnsTrue",
+    "feature_tokens": [
+      "call:staticReturnsTrue->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 76,
+    "group_size": 76,
+    "support_threshold": 69,
+    "reference_sample_ids": [
+      "path_00b1140ba227",
+      "path_015936e88900",
+      "path_034b90a590ef",
+      "path_03f7c3f40cb3",
+      "path_04370fec4ebc"
+    ]
+  },
+  {
+    "schema_version": "stageb.feature_patterns.v1",
+    "pattern_id": "pat_2eb7f06dbc13",
+    "api_group": "seed:swprintf",
+    "feature_tokens": [
+      "call:swprintf->check:CHECK"
+    ],
+    "support": 1.0,
+    "support_count": 51,
+    "group_size": 51,
+    "support_threshold": 46,
+    "reference_sample_ids": [
+      "path_0125f396358a",
+      "path_0214b1963f96",
+      "path_08f71be583f7",
+      "path_092b1b91f7cc",
+      "path_0c71ac846060"
+    ]
+  }
+]

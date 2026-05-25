@@ -27,7 +27,7 @@ Stage C 的时间预算只控制是否继续提交候选，以及未完成 worke
 `P3` 超时审计记录。已完成的 P0 不因 C deadline 改写到非 D 输出；
 D 只对 P0 施加每条 10 秒执行 timeout；P1/P2 不受 D timeout 限制。
 
-Stage C 固定执行三轮双 agent 审计：红队 `red_proposer`、蓝队 `blue_challenger`、红队 `red_rebuttal`，完成记录写入 `agent_rounds`。`P1` 表示最终红队回应仍认为有漏洞且至少两轮支持漏洞，包括第一轮无漏洞后由蓝队和红队纠正为漏洞，或第一轮有漏洞、蓝队挑战、第三轮仍确认漏洞。`P2` 表示至少一轮报过漏洞但最终支持不稳定，例如第一轮报漏洞而后续两轮都否定。LLM/API 失败不算无漏洞票，会以 `stage_c_llm_error` 或 `stage_c_partial_llm_error` 保留在审计/候选原因里。
+Stage C 固定执行三轮双 agent 审计：红队 `red_proposer`、蓝队 `blue_challenger`、红队 `red_rebuttal`，完成记录写入 `agent_rounds`。C 的判断分两步：先判断路由是否违反源/API contract 或 CWE 定义，再单独判断可利用性、影响和风险；影响较低或不确定只能降低置信度或保持动态验证，不能把明确的 API contract violation 改判为无漏洞。`P1` 表示最终红队回应仍认为有漏洞且至少两轮支持漏洞，包括第一轮无漏洞后由蓝队和红队纠正为漏洞，或第一轮有漏洞、蓝队挑战、第三轮仍确认漏洞；确定性的源/API contract safety net 也会把明确的错误返回值检查等语义假设路由为 `P1` 动态候选。`P2` 表示至少一轮报过漏洞但最终支持不稳定，例如第一轮报漏洞而后续两轮都否定。LLM/API 失败不算无漏洞票，会以 `stage_c_llm_error` 或 `stage_c_partial_llm_error` 保留在审计/候选原因里。
 
 如果多个文件里出现相同的 `project_id + hypothesis_id`，脚本会直接失败，要求先消除重复输入。
 
