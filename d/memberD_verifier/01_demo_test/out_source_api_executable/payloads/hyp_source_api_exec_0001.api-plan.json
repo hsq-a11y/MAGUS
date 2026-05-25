@@ -9,17 +9,43 @@
   ],
   "source_file": "src/crypto/example.c",
   "entry_symbol": "parse_request",
+  "oracle_profile_id": "path.untrusted_search_path",
+  "oracle_profile": {
+    "profile_id": "path.untrusted_search_path",
+    "supported": true,
+    "selection_score": 3,
+    "description": "Search path state or API uses attacker-influenced path resolution.",
+    "matched_apis": [],
+    "inferred_apis": [],
+    "confirm_patterns": [
+      "MAGUS_ORACLE_FLAW name=AddDllDirectory reason=tainted_dll_search_directory",
+      "MAGUS_ORACLE_FLAW name=SearchPathA reason=tainted_search_path_api",
+      "MAGUS_ORACLE_FLAW name=SearchPathW reason=tainted_search_path_api",
+      "MAGUS_ORACLE_FLAW name=SetDllDirectoryA reason=tainted_dll_search_directory",
+      "MAGUS_ORACLE_FLAW name=SetDllDirectoryW reason=tainted_dll_search_directory",
+      "MAGUS_ORACLE_FLAW name=SetEnvironmentVariableA reason=tainted_search_path_environment",
+      "MAGUS_ORACLE_FLAW name=SetEnvironmentVariableW reason=tainted_search_path_environment",
+      "MAGUS_ORACLE_FLAW name=_putenv reason=tainted_search_path_environment",
+      "MAGUS_ORACLE_FLAW name=_wputenv reason=tainted_search_path_environment",
+      "MAGUS_ORACLE_FLAW name=putenv reason=tainted_search_path_environment"
+    ],
+    "capability_patterns": [],
+    "accepted_evidence": [
+      "route-bound search path API or PATH update consumed attacker-controlled path text"
+    ],
+    "semantic_model": {}
+  },
   "api_sequence": [
     "parse_request -> ASN1_OCTET_STRING_new -> use pointer"
   ],
   "payload": {
     "marker": "memberD_source_api_probe_hyp_source_api_exec_0001",
     "entry_symbol": "parse_request",
-    "input_source": "mock malformed DER certificate file",
+    "input_source": null,
     "seed_inputs": [
-      "empty DER",
-      "oversized DER",
-      "malformed bytes"
+      "empty input",
+      "malformed serialized bytes",
+      "allocation failure path"
     ]
   },
   "poc_plan": [
@@ -29,21 +55,17 @@
     "Run under sanitizer/test oracle and collect crash, error-code, assertion, or differential evidence"
   ],
   "oracle": {
-    "accepted_evidence": [
-      "ASan/UBSan crash",
-      "non-zero test exit caused by crafted source/API input",
-      "unexpected success on invalid API state",
-      "differential behavior between vulnerable and fixed revision"
-    ],
     "failure_patterns": [
       "AddressSanitizer",
       "null pointer"
     ],
-    "expect_nonzero_exit": true
+    "expect_nonzero_exit": true,
+    "profile_id": "path.untrusted_search_path",
+    "profile_supported": true
   },
   "build": {
     "env_profile": "source_repository",
-    "repo_path": "/home/sq_hu/MAGUS/d/memberD_verifier/01_demo_test/mock_source_project",
+    "repo_path": "/home/lxz/MAGUS/d/memberD_verifier/01_demo_test/mock_source_project",
     "config_cmd": null,
     "build_cmd": null,
     "run_cmd": "${PYTHON} poc.py",
@@ -59,6 +81,6 @@
     "evidence_slice": "obj = ASN1_OCTET_STRING_new(); return obj->length;"
   },
   "timestamps": {
-    "generated_at": "2026-05-21T06:42:07Z"
+    "generated_at": "2026-05-24T11:42:33Z"
   }
 }

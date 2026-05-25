@@ -92,6 +92,51 @@ class JulietHelperOutputTests(unittest.TestCase):
             ["MAGUS_ORACLE_RAN profile=resource.handle_lifecycle.win32"],
         )
 
+    def test_sanitizer_crash_after_bad_entry_counts_as_route_bound(self):
+        stdout = "Calling bad()...\n"
+        stderr = "ERROR: AddressSanitizer: heap-buffer-overflow on address 0x1"
+
+        self.assertTrue(
+            self.runner.route_was_executed(
+                stdout,
+                Path("CWE122_Heap_Based_Buffer_Overflow__cpp_CWE129_connect_socket_21.cpp"),
+                "bad",
+                stderr,
+            )
+        )
+
+    def test_memory_profile_enables_asan_flags(self):
+        self.assertIn(
+            "-fsanitize=address",
+            self.runner.sanitizer_flags_for("memory.out_of_bounds_write"),
+        )
+        self.assertIn(
+            "-fsanitize=address",
+            self.runner.sanitizer_flags_for("memory.out_of_bounds_read"),
+        )
+        self.assertIn(
+            "-fsanitize=address",
+            self.runner.sanitizer_flags_for("memory.use_after_free"),
+        )
+        self.assertEqual(self.runner.sanitizer_flags_for("process.untrusted_library_load"), [])
+
+    def test_integer_profile_enables_ubsan_flags(self):
+        flags = self.runner.sanitizer_flags_for("integer.overflow")
+
+        self.assertIn("-fsanitize=undefined,signed-integer-overflow", flags)
+        self.assertNotIn("-fsanitize=address", flags)
+
+    def test_payload_candidates_use_runtime_inputs_json_once_each(self):
+        old_value = self.runner.os.environ.get("MAGUS_D_RUNTIME_INPUTS_JSON")
+        self.runner.os.environ["MAGUS_D_RUNTIME_INPUTS_JSON"] = '["11", "10", "11"]'
+        try:
+            self.assertEqual(self.runner.payload_candidates("10"), ["11", "10"])
+        finally:
+            if old_value is None:
+                self.runner.os.environ.pop("MAGUS_D_RUNTIME_INPUTS_JSON", None)
+            else:
+                self.runner.os.environ["MAGUS_D_RUNTIME_INPUTS_JSON"] = old_value
+
 
 if __name__ == "__main__":
     unittest.main()

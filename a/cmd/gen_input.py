@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shlex
 from pathlib import Path
 from typing import Any
@@ -73,7 +74,21 @@ def relative_or_absolute(path: Path, base_dir: Path) -> str:
     try:
         return path.relative_to(base_dir).as_posix()
     except ValueError:
-        return str(path)
+        return shell_path(path)
+
+
+def shell_path(path: Path | str) -> str:
+    return str(path).replace("\\", "/")
+
+
+def shell_quote(value: Path | str) -> str:
+    return shlex.quote(shell_path(value))
+
+
+def unquote_compile_token(token: str) -> str:
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in {"'", '"'}:
+        return token[1:-1]
+    return token
 
 
 def output_path_for_source(repo_path: Path, source_path: Path, bc_dir: str, variant: str) -> Path:
@@ -108,7 +123,7 @@ def command_tokens(record: dict[str, Any], index: int) -> list[str]:
     command = record.get("command")
     if not isinstance(command, str) or not command.strip():
         raise ValueError(f"compile command #{index} must contain command or arguments")
-    return shlex.split(command)
+    return [unquote_compile_token(token) for token in shlex.split(command, posix=(os.name != "nt"))]
 
 
 def record_directory(record: dict[str, Any], index: int) -> Path:
@@ -210,7 +225,7 @@ def normalize_compile_tokens(tokens: list[str], source_path: Path, output_path: 
         "-g",
         *rest,
         "-o",
-        str(output_path),
+        shell_path(output_path),
     ]
 
 
@@ -256,7 +271,7 @@ def build_project_record(
         seen_shell_commands.add(command)
         commands.append(command)
 
-    append_shell_command(f"mkdir -p {shlex.quote(bc_dir)}")
+    append_shell_command(f"mkdir -p {shell_quote(bc_dir)}")
     for index, record in enumerate(records, start=1):
         if not isinstance(record, dict):
             raise ValueError(f"compile command #{index} must be an object")
@@ -274,7 +289,7 @@ def build_project_record(
         relative_output = bitcode_output_path.relative_to(repo_path)
         relative_output_parent = relative_output.parent.as_posix()
         if relative_output_parent:
-            append_shell_command(f"mkdir -p {shlex.quote(relative_output_parent)}")
+            append_shell_command(f"mkdir -p {shell_quote(relative_output_parent)}")
 
         tokens = command_tokens(record, index)
         bitcode_tokens = normalize_compile_tokens(
@@ -284,8 +299,8 @@ def build_project_record(
             args.clang,
             args.clangxx,
         )
-        bitcode_command = " ".join(shlex.quote(token) for token in bitcode_tokens)
-        append_shell_command(f"( cd {shlex.quote(str(directory))} && {bitcode_command} )")
+        bitcode_command = " ".join(shell_quote(token) for token in bitcode_tokens)
+        append_shell_command(f"( cd {shell_quote(directory)} && {bitcode_command} )")
         sources.append(source_path)
 
     if not sources:

@@ -1,0 +1,1860 @@
+python3 pipeline.py abcd --a-input a/input/srcs_500.in.jsonl --a-output a/out/srcs_500.raw.jsonl --b-output-dir b/b_output_500 --c-output c/out/hypotheses_500.jsonl --min-support 3 --report-root report --report-run-name srcs_500 --c-time-limit-seconds 600 --d-contexts d/memberD_verifier/02_run_with_C/verification_contexts.srcs_500.jsonl
+[pipeline] report run name=srcs_500
+[pipeline] Stage D output dir=/home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500
+[pipeline] cwd=/home/lxz/MAGUS/a
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 cmd/miner.py --input /home/lxz/MAGUS/a/input/srcs_500.in.jsonl --output /home/lxz/MAGUS/a/out/srcs_500.raw.jsonl
+removed artifacts for 1 successful projects
+removed 1 generated bitcode dirs
+wrote 6984 samples to /home/lxz/MAGUS/a/out/srcs_500.raw.jsonl
+[pipeline] derived Stage A LLM output=/home/lxz/MAGUS/a/out/srcs_500.llm.jsonl
+[pipeline] cwd=/home/lxz/MAGUS/a
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 cmd/llm_export.py --input /home/lxz/MAGUS/a/out/srcs_500.raw.jsonl --projects /home/lxz/MAGUS/a/input/srcs_500.in.jsonl --output /home/lxz/MAGUS/a/out/srcs_500.llm.jsonl
+wrote 6984 LLM evidence records to /home/lxz/MAGUS/a/out/srcs_500.llm.jsonl
+[pipeline] derived Stage C LLM input=/home/lxz/MAGUS/a/out/srcs_500.llm.jsonl
+[pipeline] derived Stage B input=/home/lxz/MAGUS/a/out/srcs_500.stats.jsonl
+[pipeline] cwd=/home/lxz/MAGUS/b
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 b_miner.py --input /home/lxz/MAGUS/a/out/srcs_500.stats.jsonl --llm-input /home/lxz/MAGUS/a/out/srcs_500.llm.jsonl --output-dir /home/lxz/MAGUS/b/b_output_500 --min-support 3
+加载输入: /home/lxz/MAGUS/a/out/srcs_500.stats.jsonl
+共 6984 个样本
+加载 LLM 证据: /home/lxz/MAGUS/a/out/srcs_500.llm.jsonl
+共 6984 条 LLM 证据
+阶段1: 高频 feature 统计 (min_support=3, min_support_ratio=0.9)
+  分组 484 个, 高频 feature 1304 个
+  输出 patterns.json -> /home/lxz/MAGUS/b/b_output_500/patterns.json
+阶段2: 缺失高频 feature 评分
+  输出 candidates.scored.jsonl -> /home/lxz/MAGUS/b/b_output_500/candidates.scored.jsonl
+  输出 candidates.for_c.jsonl -> /home/lxz/MAGUS/b/b_output_500/candidates.for_c.jsonl
+质量门禁: risk_score >= 0.60 且存在缺失 feature 通过 0/6984 个
+统计信息 -> /home/lxz/MAGUS/b/b_output_500/b_miner_stats.json
+{
+  "schema_version": "stageb.feature_miner_stats.v1",
+  "input_schema_version": "stagea.stats.features.v1",
+  "c_ready_schema_version": "stageb.c_ready_candidates.v3",
+  "total_samples": 6984,
+  "total_groups": 484,
+  "groups_without_expected_features": 439,
+  "groups_without_expected_features_ratio": 0.907,
+  "total_patterns": 1304,
+  "total_candidates": 6984,
+  "c_ready_candidates": 1497,
+  "risk_threshold": 0.6,
+  "risk_score_weights": {
+    "rarity": 0.1,
+    "sink": 0.45,
+    "pattern_deviation": 0.45
+  },
+  "c_ready_priority_policy": {
+    "objective": "front_load_likely_stage_c_p0_p1_p2_under_time_budget",
+    "base_weights": {
+      "threshold_pass": 2.0,
+      "risk_score": 10.0,
+      "sink_score": 2.0,
+      "pattern_deviation_score": 2.0,
+      "rarity_score": 0.5,
+      "candidate_count": 0.01,
+      "static_confirmation_supported": 0.5
+    },
+    "positive_signal_weights": {
+      "environment_source": 4.0,
+      "stdin_source": 4.0,
+      "network_source_or_sink": 2.0,
+      "network_receive_call": 1.4,
+      "network_setup_call": 2.0,
+      "external_memory_sink": 2.0
+    },
+    "demotion_weights": {
+      "main_dispatch_route": -5.0,
+      "filesystem_file_source_without_external_input": -5.0,
+      "filesystem_sink_without_external_input": -5.0
+    },
+    "runtime_inputs": [
+      "stage_b scores",
+      "source_kinds",
+      "sink_types",
+      "seed_tokens",
+      "route",
+      "file",
+      "evidence_slice"
+    ],
+    "candidate_count_base_cap": 20,
+    "excludes": [
+      "Stage C output",
+      "Stage D output",
+      "benchmark answer labels",
+      "sanitization reverse maps",
+      "evaluation outputs"
+    ]
+  },
+  "static_confirmation_support_policy": {
+    "min_sink_score": 0.7,
+    "min_pattern_deviation_score": 0.4
+  },
+  "candidate_sort_order": [
+    "risk_score_desc",
+    "pattern_deviation_score_desc",
+    "sink_score_desc",
+    "rarity_score_desc",
+    "threshold_pass_desc",
+    "missing_feature_count_desc"
+  ],
+  "c_ready_sort_order": [
+    "c_priority_score_desc",
+    "max_risk_score_desc",
+    "max_sink_score_desc",
+    "max_pattern_deviation_score_desc",
+    "max_rarity_score_desc",
+    "route_aggregated_threshold_pass_desc",
+    "candidate_count_desc"
+  ],
+  "passed_threshold": 0,
+  "failed_threshold": 6984,
+  "min_support_by_group": {
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_console_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_console_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_console_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_console_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_console_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_console_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_environment_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_file_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_file_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_file_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_file_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_file_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_file_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_51b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54c_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54c_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54d_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54d_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54e_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54e_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_61b_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_61b_case1V1Source": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_63b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_63b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_64b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_64b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_66b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_66b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_67b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_67b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_68b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_char_relativePath_68b_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case0Source": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case1V11Source": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case1V12Source": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_41_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_41_case1V1Sink": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_51b_case0Sink": 3,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_51b_case1V1Sink": 3,
+    "seed:FreeLibrary": 667,
+    "seed:LoadLibraryA": 600,
+    "seed:LoadLibraryW": 68,
+    "seed:WSACleanup": 114,
+    "seed:WSAStartup": 114,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_33L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L11case0SourceERPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L13case1V1SourceERPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_6211case0SourceERPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_6213case1V1SourceERPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_62L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_72L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_73L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_74L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8146CWE114_Process_Control__w32_char_file_81_case0C2Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8148CWE114_Process_Control__w32_char_file_81_case1V1C2Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_81L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8246CWE114_Process_Control__w32_char_file_82_case0C2Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8248CWE114_Process_Control__w32_char_file_82_case1V1C2Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_82L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8346CWE114_Process_Control__w32_char_file_83_case0C1EPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8346CWE114_Process_Control__w32_char_file_83_case0D1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8348CWE114_Process_Control__w32_char_file_83_case1V1C1EPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8348CWE114_Process_Control__w32_char_file_83_case1V1D1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_83L7case1V1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8446CWE114_Process_Control__w32_char_file_84_case0C1EPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8446CWE114_Process_Control__w32_char_file_84_case0D1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8448CWE114_Process_Control__w32_char_file_84_case1V1C1EPc": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8448CWE114_Process_Control__w32_char_file_84_case1V1D1Ev": 3,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_84L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_33L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L11case0SourceERPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L13case1V1SourceERPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_6211case0SourceERPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_6213case1V1SourceERPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_62L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_72L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_73L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_74L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8149CWE114_Process_Control__w32_char_console_81_case0C2Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8151CWE114_Process_Control__w32_char_console_81_case1V1C2Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_81L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8249CWE114_Process_Control__w32_char_console_82_case0C2Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8251CWE114_Process_Control__w32_char_console_82_case1V1C2Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_82L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8349CWE114_Process_Control__w32_char_console_83_case0C1EPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8349CWE114_Process_Control__w32_char_console_83_case0D1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8351CWE114_Process_Control__w32_char_console_83_case1V1C1EPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8351CWE114_Process_Control__w32_char_console_83_case1V1D1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_83L7case1V1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8449CWE114_Process_Control__w32_char_console_84_case0C1EPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8449CWE114_Process_Control__w32_char_console_84_case0D1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8451CWE114_Process_Control__w32_char_console_84_case1V1C1EPc": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8451CWE114_Process_Control__w32_char_console_84_case1V1D1Ev": 3,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_84L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_33L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L11case0SourceERPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L13case1V1SourceERPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_6211case0SourceERPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_6213case1V1SourceERPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_62L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_72L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_73L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_74L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8153CWE114_Process_Control__w32_char_environment_81_case0C2Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8155CWE114_Process_Control__w32_char_environment_81_case1V1C2Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_81L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8253CWE114_Process_Control__w32_char_environment_82_case0C2Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8255CWE114_Process_Control__w32_char_environment_82_case1V1C2Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_82L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8353CWE114_Process_Control__w32_char_environment_83_case0C1EPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8353CWE114_Process_Control__w32_char_environment_83_case0D1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8355CWE114_Process_Control__w32_char_environment_83_case1V1C1EPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8355CWE114_Process_Control__w32_char_environment_83_case1V1D1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_83L7case1V1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8453CWE114_Process_Control__w32_char_environment_84_case0C1EPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8453CWE114_Process_Control__w32_char_environment_84_case0D1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8455CWE114_Process_Control__w32_char_environment_84_case1V1C1EPc": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8455CWE114_Process_Control__w32_char_environment_84_case1V1D1Ev": 3,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_84L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_33L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L11case0SourceERPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L13case1V1SourceERPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_6211case0SourceERPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_6213case1V1SourceERPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_62L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_72L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_73L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_74L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8154CWE114_Process_Control__w32_char_relativePath_81_case0C2Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8156CWE114_Process_Control__w32_char_relativePath_81_case1V1C2Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_81L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8254CWE114_Process_Control__w32_char_relativePath_82_case0C2Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8256CWE114_Process_Control__w32_char_relativePath_82_case1V1C2Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_82L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8354CWE114_Process_Control__w32_char_relativePath_83_case0C1EPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8354CWE114_Process_Control__w32_char_relativePath_83_case0D1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8356CWE114_Process_Control__w32_char_relativePath_83_case1V1C1EPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8356CWE114_Process_Control__w32_char_relativePath_83_case1V1D1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_83L7case1V1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8454CWE114_Process_Control__w32_char_relativePath_84_case0C1EPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8454CWE114_Process_Control__w32_char_relativePath_84_case0D1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8456CWE114_Process_Control__w32_char_relativePath_84_case1V1C1EPc": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8456CWE114_Process_Control__w32_char_relativePath_84_case1V1D1Ev": 3,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_84L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_33L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L11case0SourceERPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L13case1V1SourceERPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_6211case0SourceERPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_6213case1V1SourceERPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_62L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_72L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_73L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_74L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8155CWE114_Process_Control__w32_char_listen_socket_81_case0C2Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8157CWE114_Process_Control__w32_char_listen_socket_81_case1V1C2Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_81L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8255CWE114_Process_Control__w32_char_listen_socket_82_case0C2Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8257CWE114_Process_Control__w32_char_listen_socket_82_case1V1C2Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_82L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8355CWE114_Process_Control__w32_char_listen_socket_83_case0C1EPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8355CWE114_Process_Control__w32_char_listen_socket_83_case0D1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8357CWE114_Process_Control__w32_char_listen_socket_83_case1V1C1EPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8357CWE114_Process_Control__w32_char_listen_socket_83_case1V1D1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_83L7case1V1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8455CWE114_Process_Control__w32_char_listen_socket_84_case0C1EPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8455CWE114_Process_Control__w32_char_listen_socket_84_case0D1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8457CWE114_Process_Control__w32_char_listen_socket_84_case1V1C1EPc": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8457CWE114_Process_Control__w32_char_listen_socket_84_case1V1D1Ev": 3,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_84L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_33L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L11case0SourceERPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L13case1V1SourceERPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_6211case0SourceERPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_6213case1V1SourceERPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_62L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7211case1V1SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_729case0SinkESt6vectorIPcSaIS1_EE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_72L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_73L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_74L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8156CWE114_Process_Control__w32_char_connect_socket_81_case0C2Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8158CWE114_Process_Control__w32_char_connect_socket_81_case1V1C2Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_81L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8256CWE114_Process_Control__w32_char_connect_socket_82_case0C2Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8258CWE114_Process_Control__w32_char_connect_socket_82_case1V1C2Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_82L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8356CWE114_Process_Control__w32_char_connect_socket_83_case0C1EPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8356CWE114_Process_Control__w32_char_connect_socket_83_case0D1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8358CWE114_Process_Control__w32_char_connect_socket_83_case1V1C1EPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8358CWE114_Process_Control__w32_char_connect_socket_83_case1V1D1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_83L7case1V1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8456CWE114_Process_Control__w32_char_connect_socket_84_case0C1EPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8456CWE114_Process_Control__w32_char_connect_socket_84_case0D1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8458CWE114_Process_Control__w32_char_connect_socket_84_case1V1C1EPc": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8458CWE114_Process_Control__w32_char_connect_socket_84_case1V1D1Ev": 3,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_84L7case1V1Ev": 3,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_33L7case1V1Ev": 3,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L11case0SourceERPw": 3,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L13case1V1SourceERPw": 3,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L7case1V1Ev": 3,
+    "seed:_ZN9__gnu_cxx17__normal_iteratorIPKPcSt6vectorIS1_SaIS1_EEEC2IPS1_vEERKNS0_IT_S6_EE": 33,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEC2ERKS7_": 11,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEC2Ev": 11,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEED2Ev": 44,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEixEOi": 44,
+    "seed:_ZNSt6vectorIPcSaIS0_EE3endEv": 33,
+    "seed:_ZNSt6vectorIPcSaIS0_EE6insertEN9__gnu_cxx17__normal_iteratorIPKS0_S2_EEmRS5_": 33,
+    "seed:_ZNSt6vectorIPcSaIS0_EEC2ERKS2_": 11,
+    "seed:_ZNSt6vectorIPcSaIS0_EEC2Ev": 11,
+    "seed:_ZNSt6vectorIPcSaIS0_EED2Ev": 44,
+    "seed:_ZNSt6vectorIPcSaIS0_EEixEm": 11,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EE4backEv": 11,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EE9push_backERKS1_": 33,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EEC2ERKS3_": 11,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EEC2Ev": 11,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EED2Ev": 44,
+    "seed:_ZdlPv": 33,
+    "seed:_Znwm": 22,
+    "seed:__clang_call_terminate": 22,
+    "seed:accept": 44,
+    "seed:bind": 44,
+    "seed:case0Sink": 7,
+    "seed:case0Source": 13,
+    "seed:case1V1": 136,
+    "seed:case1V11": 95,
+    "seed:case1V11Source": 7,
+    "seed:case1V12": 95,
+    "seed:case1V12Source": 7,
+    "seed:case1V1Sink": 7,
+    "seed:case1V1Source": 7,
+    "seed:closesocket": 157,
+    "seed:connect": 71,
+    "seed:fclose": 44,
+    "seed:fgets": 87,
+    "seed:fopen": 44,
+    "seed:getenv": 44,
+    "seed:globalReturnsFalse": 7,
+    "seed:globalReturnsTrue": 13,
+    "seed:globalReturnsTrueOrFalse": 13,
+    "seed:htons": 114,
+    "seed:inet_addr": 71,
+    "seed:listen": 44,
+    "seed:printLine": 1484,
+    "seed:recv": 114,
+    "seed:socket": 114,
+    "seed:staticReturnsFalse": 7,
+    "seed:staticReturnsTrue": 13,
+    "seed:strchr": 173,
+    "seed:strcpy": 395,
+    "seed:strlen": 260,
+    "seed:strncat": 44,
+    "seed:wcschr": 54,
+    "seed:wcscpy": 43,
+    "seed:wcslen": 27
+  },
+  "expected_feature_count_by_group": {
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_connect_socket_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_console_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_console_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_console_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_console_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_console_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_console_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_environment_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_file_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_file_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_file_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_file_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_file_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_file_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_listen_socket_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_51b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_52c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_53d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54c_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54c_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54d_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54d_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54e_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_54e_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_61b_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_61b_case1V1Source": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_63b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_63b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_64b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_64b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_66b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_66b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_67b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_67b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_68b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_char_relativePath_68b_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case0Source": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case1V11Source": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_22_case1V12Source": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_41_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_41_case1V1Sink": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_51b_case0Sink": 0,
+    "seed:CWE114_Process_Control__w32_wchar_t_connect_socket_51b_case1V1Sink": 0,
+    "seed:FreeLibrary": 1,
+    "seed:LoadLibraryA": 2,
+    "seed:LoadLibraryW": 2,
+    "seed:WSACleanup": 0,
+    "seed:WSAStartup": 1,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_33L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L11case0SourceERPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L13case1V1SourceERPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_43L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_6211case0SourceERPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_6213case1V1SourceERPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_62L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_72L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_73L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_74L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8146CWE114_Process_Control__w32_char_file_81_case0C2Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8148CWE114_Process_Control__w32_char_file_81_case1V1C2Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_81L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8246CWE114_Process_Control__w32_char_file_82_case0C2Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8248CWE114_Process_Control__w32_char_file_82_case1V1C2Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_82L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8346CWE114_Process_Control__w32_char_file_83_case0C1EPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8346CWE114_Process_Control__w32_char_file_83_case0D1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8348CWE114_Process_Control__w32_char_file_83_case1V1C1EPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8348CWE114_Process_Control__w32_char_file_83_case1V1D1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_83L7case1V1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8446CWE114_Process_Control__w32_char_file_84_case0C1EPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8446CWE114_Process_Control__w32_char_file_84_case0D1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8448CWE114_Process_Control__w32_char_file_84_case1V1C1EPc": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_8448CWE114_Process_Control__w32_char_file_84_case1V1D1Ev": 0,
+    "seed:_ZN40CWE114_Process_Control__w32_char_file_84L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_33L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L11case0SourceERPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L13case1V1SourceERPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_43L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_6211case0SourceERPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_6213case1V1SourceERPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_62L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_72L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_73L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_74L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8149CWE114_Process_Control__w32_char_console_81_case0C2Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8151CWE114_Process_Control__w32_char_console_81_case1V1C2Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_81L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8249CWE114_Process_Control__w32_char_console_82_case0C2Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8251CWE114_Process_Control__w32_char_console_82_case1V1C2Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_82L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8349CWE114_Process_Control__w32_char_console_83_case0C1EPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8349CWE114_Process_Control__w32_char_console_83_case0D1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8351CWE114_Process_Control__w32_char_console_83_case1V1C1EPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8351CWE114_Process_Control__w32_char_console_83_case1V1D1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_83L7case1V1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8449CWE114_Process_Control__w32_char_console_84_case0C1EPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8449CWE114_Process_Control__w32_char_console_84_case0D1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8451CWE114_Process_Control__w32_char_console_84_case1V1C1EPc": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_8451CWE114_Process_Control__w32_char_console_84_case1V1D1Ev": 0,
+    "seed:_ZN43CWE114_Process_Control__w32_char_console_84L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_33L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L11case0SourceERPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L13case1V1SourceERPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_43L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_6211case0SourceERPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_6213case1V1SourceERPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_62L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_72L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_73L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_74L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8153CWE114_Process_Control__w32_char_environment_81_case0C2Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8155CWE114_Process_Control__w32_char_environment_81_case1V1C2Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_81L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8253CWE114_Process_Control__w32_char_environment_82_case0C2Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8255CWE114_Process_Control__w32_char_environment_82_case1V1C2Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_82L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8353CWE114_Process_Control__w32_char_environment_83_case0C1EPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8353CWE114_Process_Control__w32_char_environment_83_case0D1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8355CWE114_Process_Control__w32_char_environment_83_case1V1C1EPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8355CWE114_Process_Control__w32_char_environment_83_case1V1D1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_83L7case1V1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8453CWE114_Process_Control__w32_char_environment_84_case0C1EPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8453CWE114_Process_Control__w32_char_environment_84_case0D1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8455CWE114_Process_Control__w32_char_environment_84_case1V1C1EPc": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_8455CWE114_Process_Control__w32_char_environment_84_case1V1D1Ev": 0,
+    "seed:_ZN47CWE114_Process_Control__w32_char_environment_84L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_33L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L11case0SourceERPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L13case1V1SourceERPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_43L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_6211case0SourceERPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_6213case1V1SourceERPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_62L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_72L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_73L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_74L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8154CWE114_Process_Control__w32_char_relativePath_81_case0C2Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8156CWE114_Process_Control__w32_char_relativePath_81_case1V1C2Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_81L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8254CWE114_Process_Control__w32_char_relativePath_82_case0C2Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8256CWE114_Process_Control__w32_char_relativePath_82_case1V1C2Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_82L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8354CWE114_Process_Control__w32_char_relativePath_83_case0C1EPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8354CWE114_Process_Control__w32_char_relativePath_83_case0D1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8356CWE114_Process_Control__w32_char_relativePath_83_case1V1C1EPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8356CWE114_Process_Control__w32_char_relativePath_83_case1V1D1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_83L7case1V1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8454CWE114_Process_Control__w32_char_relativePath_84_case0C1EPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8454CWE114_Process_Control__w32_char_relativePath_84_case0D1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8456CWE114_Process_Control__w32_char_relativePath_84_case1V1C1EPc": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_8456CWE114_Process_Control__w32_char_relativePath_84_case1V1D1Ev": 0,
+    "seed:_ZN48CWE114_Process_Control__w32_char_relativePath_84L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_33L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L11case0SourceERPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L13case1V1SourceERPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_43L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_6211case0SourceERPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_6213case1V1SourceERPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_62L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_72L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_73L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_74L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8155CWE114_Process_Control__w32_char_listen_socket_81_case0C2Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8157CWE114_Process_Control__w32_char_listen_socket_81_case1V1C2Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_81L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8255CWE114_Process_Control__w32_char_listen_socket_82_case0C2Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8257CWE114_Process_Control__w32_char_listen_socket_82_case1V1C2Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_82L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8355CWE114_Process_Control__w32_char_listen_socket_83_case0C1EPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8355CWE114_Process_Control__w32_char_listen_socket_83_case0D1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8357CWE114_Process_Control__w32_char_listen_socket_83_case1V1C1EPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8357CWE114_Process_Control__w32_char_listen_socket_83_case1V1D1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_83L7case1V1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8455CWE114_Process_Control__w32_char_listen_socket_84_case0C1EPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8455CWE114_Process_Control__w32_char_listen_socket_84_case0D1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8457CWE114_Process_Control__w32_char_listen_socket_84_case1V1C1EPc": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_8457CWE114_Process_Control__w32_char_listen_socket_84_case1V1D1Ev": 0,
+    "seed:_ZN49CWE114_Process_Control__w32_char_listen_socket_84L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_33L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L11case0SourceERPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L13case1V1SourceERPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_43L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_6211case0SourceERPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_6213case1V1SourceERPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_62L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7211case1V1SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_729case0SinkESt6vectorIPcSaIS1_EE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_72L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7311case1V1SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_739case0SinkENSt7__cxx114listIPcSaIS2_EEE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_73L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_7411case1V1SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_749case0SinkESt3mapIiPcSt4lessIiESaISt4pairIKiS1_EEE": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_74L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8156CWE114_Process_Control__w32_char_connect_socket_81_case0C2Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8158CWE114_Process_Control__w32_char_connect_socket_81_case1V1C2Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_81L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8256CWE114_Process_Control__w32_char_connect_socket_82_case0C2Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8258CWE114_Process_Control__w32_char_connect_socket_82_case1V1C2Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_82L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8356CWE114_Process_Control__w32_char_connect_socket_83_case0C1EPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8356CWE114_Process_Control__w32_char_connect_socket_83_case0D1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8358CWE114_Process_Control__w32_char_connect_socket_83_case1V1C1EPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8358CWE114_Process_Control__w32_char_connect_socket_83_case1V1D1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_83L7case1V1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8456CWE114_Process_Control__w32_char_connect_socket_84_case0C1EPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8456CWE114_Process_Control__w32_char_connect_socket_84_case0D1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8458CWE114_Process_Control__w32_char_connect_socket_84_case1V1C1EPc": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_8458CWE114_Process_Control__w32_char_connect_socket_84_case1V1D1Ev": 0,
+    "seed:_ZN50CWE114_Process_Control__w32_char_connect_socket_84L7case1V1Ev": 0,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_33L7case1V1Ev": 0,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L11case0SourceERPw": 0,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L13case1V1SourceERPw": 0,
+    "seed:_ZN53CWE114_Process_Control__w32_wchar_t_connect_socket_43L7case1V1Ev": 0,
+    "seed:_ZN9__gnu_cxx17__normal_iteratorIPKPcSt6vectorIS1_SaIS1_EEEC2IPS1_vEERKNS0_IT_S6_EE": 81,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEC2ERKS7_": 128,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEC2Ev": 128,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEED2Ev": 58,
+    "seed:_ZNSt3mapIiPcSt4lessIiESaISt4pairIKiS0_EEEixEOi": 66,
+    "seed:_ZNSt6vectorIPcSaIS0_EE3endEv": 115,
+    "seed:_ZNSt6vectorIPcSaIS0_EE6insertEN9__gnu_cxx17__normal_iteratorIPKS0_S2_EEmRS5_": 118,
+    "seed:_ZNSt6vectorIPcSaIS0_EEC2ERKS2_": 116,
+    "seed:_ZNSt6vectorIPcSaIS0_EEC2Ev": 115,
+    "seed:_ZNSt6vectorIPcSaIS0_EED2Ev": 40,
+    "seed:_ZNSt6vectorIPcSaIS0_EEixEm": 4,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EE4backEv": 5,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EE9push_backERKS1_": 61,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EEC2ERKS3_": 62,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EEC2Ev": 62,
+    "seed:_ZNSt7__cxx114listIPcSaIS1_EED2Ev": 45,
+    "seed:_ZdlPv": 0,
+    "seed:_Znwm": 0,
+    "seed:__clang_call_terminate": 1,
+    "seed:accept": 11,
+    "seed:bind": 11,
+    "seed:case0Sink": 0,
+    "seed:case0Source": 1,
+    "seed:case1V1": 0,
+    "seed:case1V11": 0,
+    "seed:case1V11Source": 2,
+    "seed:case1V12": 0,
+    "seed:case1V12Source": 2,
+    "seed:case1V1Sink": 0,
+    "seed:case1V1Source": 1,
+    "seed:closesocket": 4,
+    "seed:connect": 6,
+    "seed:fclose": 3,
+    "seed:fgets": 4,
+    "seed:fopen": 4,
+    "seed:getenv": 2,
+    "seed:globalReturnsFalse": 1,
+    "seed:globalReturnsTrue": 1,
+    "seed:globalReturnsTrueOrFalse": 1,
+    "seed:htons": 0,
+    "seed:inet_addr": 0,
+    "seed:listen": 11,
+    "seed:printLine": 0,
+    "seed:recv": 4,
+    "seed:socket": 5,
+    "seed:staticReturnsFalse": 1,
+    "seed:staticReturnsTrue": 1,
+    "seed:strchr": 5,
+    "seed:strcpy": 0,
+    "seed:strlen": 0,
+    "seed:strncat": 2,
+    "seed:wcschr": 5,
+    "seed:wcscpy": 0,
+    "seed:wcslen": 5
+  },
+  "risk_score_distribution": {
+    "0.0-0.3": 3236,
+    "0.3-0.5": 3748,
+    "0.5-0.7": 0,
+    "0.7-0.9": 0,
+    "0.9-1.0": 0
+  }
+}
+完成!
+[pipeline] derived Stage C candidates input=/home/lxz/MAGUS/b/b_output_500/candidates.for_c.jsonl
+[pipeline] streaming Stage C output into Stage D
+[pipeline] cwd=/home/lxz/MAGUS/d/memberD_verifier/02_run_with_C
+[pipeline] cmd=/home/lxz/MAGUS/d/memberD_verifier/.venv/bin/python stream_from_C.py --hypotheses /home/lxz/MAGUS/c/out/hypotheses_500.jsonl --done-file /tmp/magus-stage-c-tm6h5tvx/stage_c.done --out-dir /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500 --contexts /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/verification_contexts.srcs_500.jsonl
+[pipeline] cwd=/home/lxz/MAGUS/c
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 agent1.py --candidates /home/lxz/MAGUS/b/b_output_500/candidates.for_c.jsonl --output /home/lxz/MAGUS/c/out/hypotheses_500.jsonl --time-limit-seconds 600.0
+[C] red round 1 proposer path_2d23e3798398
+[C] blue round 2 challenger path_2d23e3798398
+[C] red round 3 rebuttal path_2d23e3798398
+[C] path_2d23e3798398 rank=5 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_2d23e3798398
+[D-stream] failed hyp_path_2d23e3798398 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_aae05588e6df
+[C] blue round 2 challenger path_aae05588e6df
+[C] red round 3 rebuttal path_aae05588e6df
+[C] path_aae05588e6df rank=3 priority=P1 decision=candidate_for_d reason=corrected_to_vulnerability
+[D-stream] verifying srcs_500 hyp_path_aae05588e6df
+[D-stream] failed hyp_path_aae05588e6df code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_44a642005829
+[C] blue round 2 challenger path_44a642005829
+[C] red round 3 rebuttal path_44a642005829
+[C] path_44a642005829 rank=4 priority=P1 decision=candidate_for_d reason=red_rebuttal_after_blue_challenge
+[D-stream] verifying srcs_500 hyp_path_44a642005829
+[D-stream] failed hyp_path_44a642005829 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_7441589a9244
+[C] blue round 2 challenger path_7441589a9244
+[C] red round 3 rebuttal path_7441589a9244
+[C] path_7441589a9244 rank=2 priority=P1 decision=candidate_for_d reason=red_rebuttal_after_blue_challenge
+[D-stream] verifying srcs_500 hyp_path_7441589a9244
+[D-stream] failed hyp_path_7441589a9244 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_5da6d8de3640
+[C] blue round 2 challenger path_5da6d8de3640
+[C] red round 3 rebuttal path_5da6d8de3640
+[C] path_5da6d8de3640 rank=1 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_5da6d8de3640
+[D-stream] failed hyp_path_5da6d8de3640 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c6d8bd5b009b
+[C] blue round 2 challenger path_c6d8bd5b009b
+[C] red round 3 rebuttal path_c6d8bd5b009b
+[C] path_c6d8bd5b009b rank=8 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c6d8bd5b009b
+[D-stream] failed hyp_path_c6d8bd5b009b code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_679c441293bd
+[C] blue round 2 challenger path_679c441293bd
+[C] red round 3 rebuttal path_679c441293bd
+[C] path_679c441293bd rank=9 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_679c441293bd
+[D-stream] failed hyp_path_679c441293bd code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f6584c863b2a
+[C] blue round 2 challenger path_f6584c863b2a
+[C] red round 3 rebuttal path_f6584c863b2a
+[C] path_f6584c863b2a rank=6 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_f6584c863b2a
+[D-stream] failed hyp_path_f6584c863b2a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_2e0eb4d18df6
+[C] blue round 2 challenger path_2e0eb4d18df6
+[C] red round 3 rebuttal path_2e0eb4d18df6
+[C] path_2e0eb4d18df6 rank=7 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_2e0eb4d18df6
+[D-stream] failed hyp_path_2e0eb4d18df6 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_18ab5b90e44b
+[C] blue round 2 challenger path_18ab5b90e44b
+[C] red round 3 rebuttal path_18ab5b90e44b
+[C] path_18ab5b90e44b rank=10 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_18ab5b90e44b
+[D-stream] failed hyp_path_18ab5b90e44b code=NOT_ROUTE_BOUND
+[C] path_d230d1b90d2f rank=14 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[C] red round 1 proposer path_d230d1b90d2f
+[C] blue round 2 challenger path_d230d1b90d2f
+[C] red round 3 rebuttal path_d230d1b90d2f
+[D-stream] verifying srcs_500 hyp_path_d230d1b90d2f
+[D-stream] failed hyp_path_d230d1b90d2f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_31223b55f118
+[C] blue round 2 challenger path_31223b55f118
+[C] red round 3 rebuttal path_31223b55f118
+[C] path_31223b55f118 rank=12 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_31223b55f118
+[D-stream] failed hyp_path_31223b55f118 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_b4f796666557
+[C] blue round 2 challenger path_b4f796666557
+[C] red round 3 rebuttal path_b4f796666557
+[C] path_b4f796666557 rank=11 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_b4f796666557
+[D-stream] failed hyp_path_b4f796666557 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_6ed688d2826a
+[C] blue round 2 challenger path_6ed688d2826a
+[C] red round 3 rebuttal path_6ed688d2826a
+[C] path_6ed688d2826a rank=13 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_6ed688d2826a
+[D-stream] failed hyp_path_6ed688d2826a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_9dacfdd0d657
+[C] blue round 2 challenger path_9dacfdd0d657
+[C] red round 3 rebuttal path_9dacfdd0d657
+[C] path_9dacfdd0d657 rank=15 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_9dacfdd0d657
+[D-stream] failed hyp_path_9dacfdd0d657 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_04ebc0ba1f54
+[C] blue round 2 challenger path_04ebc0ba1f54
+[C] red round 3 rebuttal path_04ebc0ba1f54
+[C] path_04ebc0ba1f54 rank=16 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_04ebc0ba1f54
+[D-stream] failed hyp_path_04ebc0ba1f54 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_b682c9dd1827
+[C] blue round 2 challenger path_b682c9dd1827
+[C] red round 3 rebuttal path_b682c9dd1827
+[C] path_b682c9dd1827 rank=18 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_b682c9dd1827
+[D-stream] failed hyp_path_b682c9dd1827 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_db95c8879a85
+[C] blue round 2 challenger path_db95c8879a85
+[C] red round 3 rebuttal path_db95c8879a85
+[C] path_db95c8879a85 rank=17 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_db95c8879a85
+[D-stream] failed hyp_path_db95c8879a85 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_bc70f6edde08
+[C] blue round 2 challenger path_bc70f6edde08
+[C] red round 3 rebuttal path_bc70f6edde08
+[C] path_bc70f6edde08 rank=19 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_bc70f6edde08
+[D-stream] failed hyp_path_bc70f6edde08 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_380bcffc7c17
+[C] blue round 2 challenger path_380bcffc7c17
+[C] red round 3 rebuttal path_380bcffc7c17
+[C] path_380bcffc7c17 rank=20 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_380bcffc7c17
+[D-stream] failed hyp_path_380bcffc7c17 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f04d2a3ff641
+[C] blue round 2 challenger path_f04d2a3ff641
+[C] red round 3 rebuttal path_f04d2a3ff641
+[C] path_f04d2a3ff641 rank=21 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_f04d2a3ff641
+[D-stream] failed hyp_path_f04d2a3ff641 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_4924f046a75b
+[C] blue round 2 challenger path_4924f046a75b
+[C] red round 3 rebuttal path_4924f046a75b
+[C] path_4924f046a75b rank=25 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_4924f046a75b
+[D-stream] failed hyp_path_4924f046a75b code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_bbe3b914342a
+[C] blue round 2 challenger path_bbe3b914342a
+[C] red round 3 rebuttal path_bbe3b914342a
+[C] path_bbe3b914342a rank=23 priority=P1 decision=candidate_for_d reason=red_rebuttal_after_blue_challenge
+[D-stream] verifying srcs_500 hyp_path_bbe3b914342a
+[D-stream] failed hyp_path_bbe3b914342a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_68019ab69a9b
+[C] blue round 2 challenger path_68019ab69a9b
+[C] red round 3 rebuttal path_68019ab69a9b
+[C] path_68019ab69a9b rank=24 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_68019ab69a9b
+[D-stream] failed hyp_path_68019ab69a9b code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_6b505a1b7abc
+[C] blue round 2 challenger path_6b505a1b7abc
+[C] red round 3 rebuttal path_6b505a1b7abc
+[C] path_6b505a1b7abc rank=22 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_6b505a1b7abc
+[D-stream] failed hyp_path_6b505a1b7abc code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_0b5ab567af73
+[C] blue round 2 challenger path_0b5ab567af73
+[C] red round 3 rebuttal path_0b5ab567af73
+[C] path_0b5ab567af73 rank=26 priority=P1 decision=candidate_for_d reason=red_rebuttal_after_blue_challenge
+[D-stream] verifying srcs_500 hyp_path_0b5ab567af73
+[D-stream] failed hyp_path_0b5ab567af73 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_31321ee41d1f
+[C] blue round 2 challenger path_31321ee41d1f
+[C] red round 3 rebuttal path_31321ee41d1f
+[C] path_31321ee41d1f rank=30 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_31321ee41d1f
+[D-stream] failed hyp_path_31321ee41d1f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_9123a6bdc357
+[C] blue round 2 challenger path_9123a6bdc357
+[C] red round 3 rebuttal path_9123a6bdc357
+[C] path_9123a6bdc357 rank=28 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_9123a6bdc357
+[D-stream] failed hyp_path_9123a6bdc357 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_02c35e17633f
+[C] blue round 2 challenger path_02c35e17633f
+[C] red round 3 rebuttal path_02c35e17633f
+[C] path_02c35e17633f rank=27 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_02c35e17633f
+[D-stream] failed hyp_path_02c35e17633f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_80bb54c58712
+[C] blue round 2 challenger path_80bb54c58712
+[C] red round 3 rebuttal path_80bb54c58712
+[C] path_80bb54c58712 rank=29 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_80bb54c58712
+[D-stream] failed hyp_path_80bb54c58712 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_7c03e3ea87a0
+[C] blue round 2 challenger path_7c03e3ea87a0
+[C] red round 3 rebuttal path_7c03e3ea87a0
+[C] path_7c03e3ea87a0 rank=35 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_7c03e3ea87a0
+[D-stream] failed hyp_path_7c03e3ea87a0 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_a2b6e28e6c78
+[C] blue round 2 challenger path_a2b6e28e6c78
+[C] red round 3 rebuttal path_a2b6e28e6c78
+[C] path_a2b6e28e6c78 rank=34 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_a2b6e28e6c78
+[D-stream] failed hyp_path_a2b6e28e6c78 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_2c24166977cf
+[C] blue round 2 challenger path_2c24166977cf
+[C] red round 3 rebuttal path_2c24166977cf
+[C] path_2c24166977cf rank=32 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_2c24166977cf
+[D-stream] failed hyp_path_2c24166977cf code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_e89197c43099
+[C] blue round 2 challenger path_e89197c43099
+[C] red round 3 rebuttal path_e89197c43099
+[C] path_e89197c43099 rank=33 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_e89197c43099
+[D-stream] failed hyp_path_e89197c43099 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_d66c6870626e
+[C] blue round 2 challenger path_d66c6870626e
+[C] red round 3 rebuttal path_d66c6870626e
+[C] path_d66c6870626e rank=38 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_d66c6870626e
+[D-stream] failed hyp_path_d66c6870626e code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_958f5908d47a
+[C] blue round 2 challenger path_958f5908d47a
+[C] red round 3 rebuttal path_958f5908d47a
+[C] path_958f5908d47a rank=37 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_958f5908d47a
+[D-stream] failed hyp_path_958f5908d47a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_e46f94c0a71e
+[C] blue round 2 challenger path_e46f94c0a71e
+[C] red round 3 rebuttal path_e46f94c0a71e
+[C] path_e46f94c0a71e rank=36 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_e46f94c0a71e
+[D-stream] failed hyp_path_e46f94c0a71e code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_b2c21d5c88c4
+[C] blue round 2 challenger path_b2c21d5c88c4
+[C] red round 3 rebuttal path_b2c21d5c88c4
+[C] path_b2c21d5c88c4 rank=31 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_b2c21d5c88c4
+[D-stream] failed hyp_path_b2c21d5c88c4 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_4f87f47af120
+[C] blue round 2 challenger path_4f87f47af120
+[C] red round 3 rebuttal path_4f87f47af120
+[C] path_4f87f47af120 rank=39 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_4f87f47af120
+[D-stream] failed hyp_path_4f87f47af120 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c22bd7c627f3
+[C] blue round 2 challenger path_c22bd7c627f3
+[C] red round 3 rebuttal path_c22bd7c627f3
+[C] path_c22bd7c627f3 rank=42 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[C] red round 1 proposer path_21cee6d0e4f2
+[C] blue round 2 challenger path_21cee6d0e4f2
+[C] red round 3 rebuttal path_21cee6d0e4f2
+[C] path_21cee6d0e4f2 rank=40 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c22bd7c627f3
+[D-stream] failed hyp_path_c22bd7c627f3 code=NOT_ROUTE_BOUND
+[D-stream] verifying srcs_500 hyp_path_21cee6d0e4f2
+[D-stream] failed hyp_path_21cee6d0e4f2 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_92158a65c809
+[C] blue round 2 challenger path_92158a65c809
+[C] red round 3 rebuttal path_92158a65c809
+[C] path_92158a65c809 rank=43 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_92158a65c809
+[D-stream] failed hyp_path_92158a65c809 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_8caaedaa4bc7
+[C] blue round 2 challenger path_8caaedaa4bc7
+[C] red round 3 rebuttal path_8caaedaa4bc7
+[C] path_8caaedaa4bc7 rank=44 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_8caaedaa4bc7
+[D-stream] failed hyp_path_8caaedaa4bc7 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_be7d449b2530
+[C] blue round 2 challenger path_be7d449b2530
+[C] red round 3 rebuttal path_be7d449b2530
+[C] path_be7d449b2530 rank=46 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_be7d449b2530
+[D-stream] failed hyp_path_be7d449b2530 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c39456dd7de5
+[C] blue round 2 challenger path_c39456dd7de5
+[C] red round 3 rebuttal path_c39456dd7de5
+[C] path_c39456dd7de5 rank=41 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c39456dd7de5
+[D-stream] failed hyp_path_c39456dd7de5 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_0482415f2ae1
+[C] blue round 2 challenger path_0482415f2ae1
+[C] red round 3 rebuttal path_0482415f2ae1
+[C] path_0482415f2ae1 rank=45 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_0482415f2ae1
+[D-stream] failed hyp_path_0482415f2ae1 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_1edcb9ab0f0b
+[C] blue round 2 challenger path_1edcb9ab0f0b
+[C] red round 3 rebuttal path_1edcb9ab0f0b
+[C] path_1edcb9ab0f0b rank=47 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_1edcb9ab0f0b
+[C] red round 1 proposer path_6a94b7ced18c
+[C] blue round 2 challenger path_6a94b7ced18c
+[C] red round 3 rebuttal path_6a94b7ced18c
+[C] path_6a94b7ced18c rank=48 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] failed hyp_path_1edcb9ab0f0b code=NOT_ROUTE_BOUND
+[D-stream] verifying srcs_500 hyp_path_6a94b7ced18c
+[D-stream] failed hyp_path_6a94b7ced18c code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_afcf74aa2ccf
+[C] blue round 2 challenger path_afcf74aa2ccf
+[C] red round 3 rebuttal path_afcf74aa2ccf
+[C] path_afcf74aa2ccf rank=50 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_afcf74aa2ccf
+[D-stream] failed hyp_path_afcf74aa2ccf code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_3b5e1dd1e14e
+[C] blue round 2 challenger path_3b5e1dd1e14e
+[C] red round 3 rebuttal path_3b5e1dd1e14e
+[C] path_3b5e1dd1e14e rank=49 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_3b5e1dd1e14e
+[D-stream] failed hyp_path_3b5e1dd1e14e code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f38ed0dc389a
+[C] blue round 2 challenger path_f38ed0dc389a
+[C] red round 3 rebuttal path_f38ed0dc389a
+[C] path_f38ed0dc389a rank=51 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_f38ed0dc389a
+[D-stream] failed hyp_path_f38ed0dc389a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_6ba248748349
+[C] blue round 2 challenger path_6ba248748349
+[C] red round 3 rebuttal path_6ba248748349
+[C] path_6ba248748349 rank=54 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_6ba248748349
+[D-stream] failed hyp_path_6ba248748349 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_9af1bd87628f
+[C] blue round 2 challenger path_9af1bd87628f
+[C] red round 3 rebuttal path_9af1bd87628f
+[C] path_9af1bd87628f rank=52 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_9af1bd87628f
+[D-stream] failed hyp_path_9af1bd87628f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_25f0f0767479
+[C] blue round 2 challenger path_25f0f0767479
+[C] red round 3 rebuttal path_25f0f0767479
+[C] path_25f0f0767479 rank=53 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_25f0f0767479
+[D-stream] failed hyp_path_25f0f0767479 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c3a4c8ebe75d
+[C] blue round 2 challenger path_c3a4c8ebe75d
+[C] red round 3 rebuttal path_c3a4c8ebe75d
+[C] path_c3a4c8ebe75d rank=57 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c3a4c8ebe75d
+[D-stream] failed hyp_path_c3a4c8ebe75d code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_38d9f8c96850
+[C] blue round 2 challenger path_38d9f8c96850
+[C] red round 3 rebuttal path_38d9f8c96850
+[C] path_38d9f8c96850 rank=55 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_38d9f8c96850
+[D-stream] failed hyp_path_38d9f8c96850 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_87e1bc10ad27
+[C] blue round 2 challenger path_87e1bc10ad27
+[C] red round 3 rebuttal path_87e1bc10ad27
+[C] path_87e1bc10ad27 rank=56 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_87e1bc10ad27
+[D-stream] failed hyp_path_87e1bc10ad27 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f95f3d8633a2
+[C] blue round 2 challenger path_f95f3d8633a2
+[C] red round 3 rebuttal path_f95f3d8633a2
+[C] path_f95f3d8633a2 rank=59 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_f95f3d8633a2
+[D-stream] failed hyp_path_f95f3d8633a2 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c016f2974737
+[C] blue round 2 challenger path_c016f2974737
+[C] red round 3 rebuttal path_c016f2974737
+[C] path_c016f2974737 rank=58 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c016f2974737
+[D-stream] failed hyp_path_c016f2974737 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_3b60c04fae25
+[C] blue round 2 challenger path_3b60c04fae25
+[C] red round 3 rebuttal path_3b60c04fae25
+[C] path_3b60c04fae25 rank=60 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_3b60c04fae25
+[D-stream] failed hyp_path_3b60c04fae25 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_13b5183f8bdc
+[C] blue round 2 challenger path_13b5183f8bdc
+[C] red round 3 rebuttal path_13b5183f8bdc
+[C] path_13b5183f8bdc rank=62 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_13b5183f8bdc
+[D-stream] failed hyp_path_13b5183f8bdc code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_2ea9b37dd5d1
+[C] blue round 2 challenger path_2ea9b37dd5d1
+[C] red round 3 rebuttal path_2ea9b37dd5d1
+[C] path_2ea9b37dd5d1 rank=61 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_2ea9b37dd5d1
+[D-stream] failed hyp_path_2ea9b37dd5d1 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_4047033f6ab8
+[C] blue round 2 challenger path_4047033f6ab8
+[C] red round 3 rebuttal path_4047033f6ab8
+[C] path_4047033f6ab8 rank=64 priority=P3 decision=audit_only reason=multi_agent_no_vulnerability
+[C] red round 1 proposer path_fe155ac0f205
+[C] blue round 2 challenger path_fe155ac0f205
+[C] red round 3 rebuttal path_fe155ac0f205
+[C] path_fe155ac0f205 rank=65 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_fe155ac0f205
+[D-stream] failed hyp_path_fe155ac0f205 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_857d4b9bdc7e
+[C] blue round 2 challenger path_857d4b9bdc7e
+[C] red round 3 rebuttal path_857d4b9bdc7e
+[C] path_857d4b9bdc7e rank=63 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_857d4b9bdc7e
+[D-stream] failed hyp_path_857d4b9bdc7e code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_a1b02df17552
+[C] blue round 2 challenger path_a1b02df17552
+[C] red round 3 rebuttal path_a1b02df17552
+[C] path_a1b02df17552 rank=67 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_a1b02df17552
+[D-stream] failed hyp_path_a1b02df17552 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_01fdee57d77f
+[C] blue round 2 challenger path_01fdee57d77f
+[C] red round 3 rebuttal path_01fdee57d77f
+[C] path_01fdee57d77f rank=66 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_01fdee57d77f
+[D-stream] failed hyp_path_01fdee57d77f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_48dadbaf1ab8
+[C] blue round 2 challenger path_48dadbaf1ab8
+[C] red round 3 rebuttal path_48dadbaf1ab8
+[C] path_48dadbaf1ab8 rank=68 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_48dadbaf1ab8
+[D-stream] failed hyp_path_48dadbaf1ab8 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_0ad1e431e59a
+[C] blue round 2 challenger path_0ad1e431e59a
+[C] red round 3 rebuttal path_0ad1e431e59a
+[C] path_0ad1e431e59a rank=70 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_0ad1e431e59a
+[D-stream] failed hyp_path_0ad1e431e59a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c99c4fed89c3
+[C] blue round 2 challenger path_c99c4fed89c3
+[C] red round 3 rebuttal path_c99c4fed89c3
+[C] path_c99c4fed89c3 rank=69 priority=P3 decision=audit_only reason=multi_agent_no_vulnerability
+[C] red round 1 proposer path_e7041ae1d936
+[C] blue round 2 challenger path_e7041ae1d936
+[C] red round 3 rebuttal path_e7041ae1d936
+[C] path_e7041ae1d936 rank=72 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_e7041ae1d936
+[D-stream] failed hyp_path_e7041ae1d936 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_37d3bb87febb
+[C] blue round 2 challenger path_37d3bb87febb
+[C] red round 3 rebuttal path_37d3bb87febb
+[C] path_37d3bb87febb rank=71 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_37d3bb87febb
+[D-stream] failed hyp_path_37d3bb87febb code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_be5dae794de3
+[C] blue round 2 challenger path_be5dae794de3
+[C] red round 3 rebuttal path_be5dae794de3
+LLM返回为空 attempt=0: empty_response
+[C] path_be5dae794de3 rank=73 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_be5dae794de3
+[D-stream] failed hyp_path_be5dae794de3 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_0f29cf4b1f0a
+[C] blue round 2 challenger path_0f29cf4b1f0a
+[C] red round 3 rebuttal path_0f29cf4b1f0a
+[C] path_0f29cf4b1f0a rank=75 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_0f29cf4b1f0a
+[D-stream] failed hyp_path_0f29cf4b1f0a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_a9add5feb670
+[C] blue round 2 challenger path_a9add5feb670
+[C] red round 3 rebuttal path_a9add5feb670
+[C] path_a9add5feb670 rank=74 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_a9add5feb670
+[D-stream] failed hyp_path_a9add5feb670 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_24705e6cfaba
+[C] blue round 2 challenger path_24705e6cfaba
+[C] red round 3 rebuttal path_24705e6cfaba
+[C] path_24705e6cfaba rank=76 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_24705e6cfaba
+[D-stream] failed hyp_path_24705e6cfaba code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_1e5accc7d211
+[C] blue round 2 challenger path_1e5accc7d211
+[C] red round 3 rebuttal path_1e5accc7d211
+[C] path_1e5accc7d211 rank=77 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_1e5accc7d211
+[D-stream] failed hyp_path_1e5accc7d211 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f71b3d504cf4
+[C] blue round 2 challenger path_f71b3d504cf4
+[C] red round 3 rebuttal path_f71b3d504cf4
+[C] path_f71b3d504cf4 rank=80 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_f71b3d504cf4
+[D-stream] failed hyp_path_f71b3d504cf4 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_f1b2a29790d2
+[C] blue round 2 challenger path_f1b2a29790d2
+[C] red round 3 rebuttal path_f1b2a29790d2
+[C] path_f1b2a29790d2 rank=79 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_f1b2a29790d2
+[D-stream] failed hyp_path_f1b2a29790d2 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_35da801cd88f
+[C] blue round 2 challenger path_35da801cd88f
+[C] red round 3 rebuttal path_35da801cd88f
+[C] path_35da801cd88f rank=78 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_35da801cd88f
+[D-stream] failed hyp_path_35da801cd88f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_7df7e9549f3a
+[C] blue round 2 challenger path_7df7e9549f3a
+[C] red round 3 rebuttal path_7df7e9549f3a
+[C] path_7df7e9549f3a rank=82 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_7df7e9549f3a
+[D-stream] failed hyp_path_7df7e9549f3a code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_c85516419084
+[C] blue round 2 challenger path_c85516419084
+[C] red round 3 rebuttal path_c85516419084
+[C] path_c85516419084 rank=81 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_c85516419084
+[D-stream] failed hyp_path_c85516419084 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_0951cfc8db49
+[C] blue round 2 challenger path_0951cfc8db49
+[C] red round 3 rebuttal path_0951cfc8db49
+[C] path_0951cfc8db49 rank=83 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_0951cfc8db49
+[D-stream] failed hyp_path_0951cfc8db49 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_75292b3f6728
+[C] blue round 2 challenger path_75292b3f6728
+[C] red round 3 rebuttal path_75292b3f6728
+[C] path_75292b3f6728 rank=87 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_75292b3f6728
+[D-stream] failed hyp_path_75292b3f6728 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_3793cabc36ca
+[C] blue round 2 challenger path_3793cabc36ca
+[C] red round 3 rebuttal path_3793cabc36ca
+[C] path_3793cabc36ca rank=86 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_3793cabc36ca
+[D-stream] failed hyp_path_3793cabc36ca code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_de9ebdd299ec
+[C] blue round 2 challenger path_de9ebdd299ec
+[C] red round 3 rebuttal path_de9ebdd299ec
+[C] path_de9ebdd299ec rank=84 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_de9ebdd299ec
+[D-stream] failed hyp_path_de9ebdd299ec code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_d5af7ee7660e
+[C] blue round 2 challenger path_d5af7ee7660e
+[C] red round 3 rebuttal path_d5af7ee7660e
+[C] path_d5af7ee7660e rank=88 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_d5af7ee7660e
+[D-stream] failed hyp_path_d5af7ee7660e code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_82ddd1224712
+[C] blue round 2 challenger path_82ddd1224712
+[C] red round 3 rebuttal path_82ddd1224712
+[C] path_82ddd1224712 rank=85 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_82ddd1224712
+[D-stream] failed hyp_path_82ddd1224712 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_52f5d765f134
+[C] blue round 2 challenger path_52f5d765f134
+[C] red round 3 rebuttal path_52f5d765f134
+[C] path_52f5d765f134 rank=91 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_52f5d765f134
+[D-stream] failed hyp_path_52f5d765f134 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_bf34d6412f6c
+[C] blue round 2 challenger path_bf34d6412f6c
+[C] red round 3 rebuttal path_bf34d6412f6c
+[C] path_bf34d6412f6c rank=92 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_bf34d6412f6c
+[D-stream] failed hyp_path_bf34d6412f6c code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_bcb99a8551d2
+[C] blue round 2 challenger path_bcb99a8551d2
+[C] red round 3 rebuttal path_bcb99a8551d2
+[C] path_bcb99a8551d2 rank=89 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_bcb99a8551d2
+[D-stream] failed hyp_path_bcb99a8551d2 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_61f871da5d4f
+[C] blue round 2 challenger path_61f871da5d4f
+[C] red round 3 rebuttal path_61f871da5d4f
+[C] path_61f871da5d4f rank=95 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_61f871da5d4f
+[D-stream] failed hyp_path_61f871da5d4f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_22dfc36d8dcd
+[C] blue round 2 challenger path_22dfc36d8dcd
+[C] red round 3 rebuttal path_22dfc36d8dcd
+[C] path_22dfc36d8dcd rank=90 priority=P2 decision=candidate_for_d reason=multi_agent_vulnerability_once
+[D-stream] verifying srcs_500 hyp_path_22dfc36d8dcd
+[D-stream] failed hyp_path_22dfc36d8dcd code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_70551fdd8386
+[C] blue round 2 challenger path_70551fdd8386
+[C] red round 3 rebuttal path_70551fdd8386
+[C] path_70551fdd8386 rank=96 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_70551fdd8386
+[D-stream] failed hyp_path_70551fdd8386 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_859f8d574c13
+[C] blue round 2 challenger path_859f8d574c13
+[C] red round 3 rebuttal path_859f8d574c13
+[C] path_859f8d574c13 rank=94 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_859f8d574c13
+[D-stream] failed hyp_path_859f8d574c13 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_321ec068ff85
+[C] blue round 2 challenger path_321ec068ff85
+[C] red round 3 rebuttal path_321ec068ff85
+[C] path_321ec068ff85 rank=93 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_321ec068ff85
+[D-stream] failed hyp_path_321ec068ff85 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_a531ef003d11
+[C] blue round 2 challenger path_a531ef003d11
+[C] red round 3 rebuttal path_a531ef003d11
+[C] path_a531ef003d11 rank=97 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_a531ef003d11
+[D-stream] failed hyp_path_a531ef003d11 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_02b9cbc8e82c
+[C] blue round 2 challenger path_02b9cbc8e82c
+[C] red round 3 rebuttal path_02b9cbc8e82c
+[C] path_02b9cbc8e82c rank=99 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_02b9cbc8e82c
+[D-stream] failed hyp_path_02b9cbc8e82c code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_6750009749d8
+[C] blue round 2 challenger path_6750009749d8
+[C] red round 3 rebuttal path_6750009749d8
+[C] path_6750009749d8 rank=98 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_6750009749d8
+[D-stream] failed hyp_path_6750009749d8 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_732f0f51bd9f
+[C] blue round 2 challenger path_732f0f51bd9f
+[C] red round 3 rebuttal path_732f0f51bd9f
+[C] path_732f0f51bd9f rank=100 priority=P0 decision=static_confirmed reason=multi_agent_static_strong
+[D-stream] verifying srcs_500 hyp_path_732f0f51bd9f
+[D-stream] failed hyp_path_732f0f51bd9f code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_20c5ea6bc747
+[C] blue round 2 challenger path_20c5ea6bc747
+[C] red round 3 rebuttal path_20c5ea6bc747
+[C] path_20c5ea6bc747 rank=101 priority=P1 decision=candidate_for_d reason=multi_agent_stable_needs_dynamic_verification
+[D-stream] verifying srcs_500 hyp_path_20c5ea6bc747
+[D-stream] failed hyp_path_20c5ea6bc747 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_849232d617a8
+[C] blue round 2 challenger path_849232d617a8
+[C] red round 3 rebuttal path_849232d617a8
+[C] path_849232d617a8 rank=102 priority=P1 decision=candidate_for_d reason=red_rebuttal_after_blue_challenge
+[D-stream] verifying srcs_500 hyp_path_849232d617a8
+[D-stream] failed hyp_path_849232d617a8 code=NOT_ROUTE_BOUND
+[C] red round 1 proposer path_dfb6e1794f2e
+[C] blue round 2 challenger path_dfb6e1794f2e
+[C] path_dfb6e1794f2e rank=104 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_291362c96af1 rank=108 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_388163a65944 rank=109 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3f256176666a rank=110 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_a6d7fb7ec889 rank=111 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_cc05e5591c3a rank=112 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_282f48bcb058 rank=113 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_52569a52cfbc rank=114 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_77c2d4531a2f rank=115 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_34121592840f rank=116 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_a1b5a860ceb0 rank=117 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_25591e56a711 rank=118 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_7db3acff860d rank=119 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_9b0af28079c6 rank=120 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_bc6fb450df8b rank=121 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_041a95946596 rank=122 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b95db0e43f53 rank=123 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_c6ee1c0f6d61 rank=124 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_6f5cb7c58f82 rank=125 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_acb2d4eee2d4 rank=126 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_4887a3d48a0f rank=127 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_e10b492c683d rank=128 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_2083bdb6cf2f rank=129 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_0b1aacd8f44d rank=130 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_78769245c2c0 rank=131 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_f32ae0aff943 rank=132 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_59af488ceac2 rank=133 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_1c8ac93f47d4 rank=134 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_9449adffa568 rank=135 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_e0dae184e5b3 rank=136 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_cec7a21e035e rank=137 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_63e0da0ea617 rank=138 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3b68de1a9371 rank=139 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_5b9b408c1620 rank=140 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_5085588e1b78 rank=141 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_af10ca31eac6 rank=142 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_c027f0945615 rank=143 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_eb46e1dbb341 rank=144 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_248de5db2545 rank=145 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_f8ed3a9ba81e rank=146 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_9f901c70071f rank=147 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_6d3bc65911a3 rank=148 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_55565262d1cb rank=149 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_2d4398c58e9f rank=150 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_baf7923dae8d rank=151 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b0b994b535ba rank=152 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_183eaa4be452 rank=153 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_8cc81e2b2456 rank=154 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_2e292d8f8ca4 rank=155 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_4dfff98af63e rank=156 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b69e0a11db5e rank=157 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_13df19543b67 rank=158 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_88ff4b76e202 rank=159 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_0f6f4ac0afd5 rank=160 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_6a73aa3316c4 rank=161 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_00758dfdfffd rank=162 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_7e74a7fe3667 rank=163 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_19be452f37a4 rank=164 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_a00d7125390d rank=165 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_48bf3177bc2f rank=166 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_06d843667369 rank=167 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_51b91564ac2b rank=168 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3b365ea73bbb rank=169 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_facea035cf1f rank=170 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b33b3c5acf80 rank=171 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_5999e84a764d rank=172 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_697dfa16644f rank=173 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_0aa4f56a738f rank=174 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_2af6929f838e rank=175 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_f5fb587b87e7 rank=176 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_e08c08cd69cf rank=177 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_6164f5350b13 rank=178 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_1a4f6c783c87 rank=179 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_66e4dc5a6f18 rank=180 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_ad75a6b238a3 rank=181 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b04024c20ebd rank=182 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_12895133f620 rank=183 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_c3a52da1436a rank=184 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3ea43bf2f042 rank=185 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_472d723c4030 rank=186 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_4201c7ae6e66 rank=187 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_df170ab4a6d9 rank=188 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3a231fdc07d2 rank=189 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_fb7742683834 rank=190 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_32a4bbd64772 rank=191 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_8fe00234a9db rank=192 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3ec1f290f691 rank=193 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_40ee88eb92e5 rank=194 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_65b7ab2a6716 rank=195 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_e21327570635 rank=196 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b0da1b59c4c8 rank=197 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_7f2c925095f0 rank=198 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_52b31180cbef rank=199 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_002f870681a5 rank=200 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_f57869c3d0db rank=201 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_6686100c4fb3 rank=202 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_32007f78b370 rank=203 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_7513abe2d953 rank=204 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_9a7ba92010ae rank=205 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_1a39fd63094c rank=206 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_98a33e357661 rank=207 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3ddb287b2a4d rank=208 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_7839018c9aa5 rank=209 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_15bdc6b02aeb rank=210 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_1b057fff549c rank=211 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_ce239642c0cd rank=212 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_e8885b6c7207 rank=213 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_0cccdca58ff7 rank=214 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_c35c8218a12f rank=215 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_b545b3185755 rank=216 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_74c41a8d204d rank=217 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_47d8ef535a72 rank=218 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_11ebb9b30ad7 rank=219 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_3c93d3455652 rank=220 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] red round 1 proposer path_20c6d53848cd
+[C] blue round 2 challenger path_20c6d53848cd
+LLM调用失败 attempt=0: Request timed out.
+[C] red round 1 proposer path_bd54d78ec0b9
+[C] blue round 2 challenger path_bd54d78ec0b9
+LLM调用失败 attempt=0: Request timed out.
+[C] red round 1 proposer path_eef3168a1524
+LLM调用失败 attempt=0: Request timed out.
+[C] red round 1 proposer path_efb8a6029062
+[C] blue round 2 challenger path_efb8a6029062
+LLM调用失败 attempt=0: Request timed out.
+[C] time budget exhausted after submitting 221/1497 candidates; waiting for 5 in-flight task(s)
+[C] path_ed711e4f9b45 rank=221 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_20c6d53848cd rank=106 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_bd54d78ec0b9 rank=103 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_eef3168a1524 rank=107 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] path_efb8a6029062 rank=105 priority=P3 decision=audit_only reason=stage_c_time_budget_exhausted
+[C] LLM-audited candidates: 221/1497
+[C] skipped by time budget: 1276
+[C] D candidates: 100 -> /home/lxz/MAGUS/c/out/hypotheses_500.jsonl
+[C] P0 routed to D: 71 -> /home/lxz/MAGUS/c/out/hypotheses_500.jsonl
+[C] audit only: 121 -> /home/lxz/MAGUS/c/audit/audit.jsonl
+[D-stream] processed: 100
+[D-stream] reportable: 0
+[D-stream] confirmed:  0
+[D-stream] preserved:  0
+[D-stream] failed:    100
+[D-stream] output:    /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500
+[pipeline] final report output=/home/lxz/MAGUS/report/srcs_500
+[pipeline] cwd=/home/lxz/MAGUS
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 /home/lxz/MAGUS/report/code/generate_report.py --confirmed /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500/verification.jsonl --failed /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500/verification.failed.jsonl --out-dir /home/lxz/MAGUS/report/srcs_500
+reported: 0
+output:   /home/lxz/MAGUS/report/srcs_500
+[pipeline] cwd=/home/lxz/MAGUS
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 /home/lxz/MAGUS/report/code/validate_report.py --confirmed /home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_500/verification.jsonl --report-dir /home/lxz/MAGUS/report/srcs_500
+VALID
+reportable: 0
+reported:  0

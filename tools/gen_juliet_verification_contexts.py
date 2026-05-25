@@ -102,7 +102,7 @@ def context_rows(project_ids: list[str], repo_path: Path) -> list[dict[str, Any]
     return [
         {
             "project_id": project_id,
-            "repo_path": str(repo_path),
+            "repo_path": repo_path.as_posix(),
             "test_cmd": juliet_test_cmd(),
             "oracle": juliet_oracle(),
         }

@@ -85,6 +85,28 @@ def pattern_list(value: Any) -> list[str]:
     return [str(value)]
 
 
+def payload_runtime_inputs(payload: dict[str, Any]) -> list[str]:
+    values: list[Any] = []
+    raw_inputs = payload.get("runtime_inputs")
+    if isinstance(raw_inputs, list):
+        values.extend(raw_inputs)
+    elif raw_inputs not in (None, "", []):
+        values.append(raw_inputs)
+    runtime_input = payload.get("runtime_input")
+    if runtime_input not in (None, "", []):
+        values.append(runtime_input)
+
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
 def failure_code_patterns(oracle: dict[str, Any]) -> dict[str, list[str]]:
     raw = oracle.get("failure_code_patterns") or {}
     if not isinstance(raw, dict):
@@ -102,6 +124,7 @@ def execution_env(plan: dict[str, Any]) -> dict[str, str]:
     env = os.environ.copy()
     evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     payload = plan.get("payload") if isinstance(plan.get("payload"), dict) else {}
+    runtime_inputs = payload_runtime_inputs(payload)
     values = {
         "MAGUS_D_PROJECT_ID": plan.get("project_id"),
         "MAGUS_D_SAMPLE_ID": plan.get("sample_id"),
@@ -113,10 +136,13 @@ def execution_env(plan: dict[str, Any]) -> dict[str, str]:
         "MAGUS_D_ORACLE_PROFILE_ID": plan.get("oracle_profile_id"),
         "MAGUS_D_PAYLOAD": payload.get("marker"),
         "MAGUS_D_PAYLOAD_MARKER": payload.get("marker"),
+        "MAGUS_D_RUNTIME_INPUT": runtime_inputs[0] if runtime_inputs else payload.get("runtime_input"),
     }
     for key, value in values.items():
         if value not in (None, "", []):
             env[key] = str(value)
+    if runtime_inputs:
+        env["MAGUS_D_RUNTIME_INPUTS_JSON"] = json.dumps(runtime_inputs, ensure_ascii=False)
     confirm_patterns = (plan.get("oracle") or {}).get("semantic_failure_patterns") or []
     if confirm_patterns:
         env["MAGUS_D_CONFIRM_PATTERNS_JSON"] = json.dumps(confirm_patterns, ensure_ascii=False)

@@ -14,6 +14,32 @@
           "poc_language": "unknown",
           "source_file": "src/crypto/example.c",
           "entry_symbol": "parse_request",
+          "oracle_profile_id": "path.untrusted_search_path",
+          "oracle_profile": {
+            "profile_id": "path.untrusted_search_path",
+            "supported": true,
+            "selection_score": 3,
+            "description": "Search path state or API uses attacker-influenced path resolution.",
+            "matched_apis": [],
+            "inferred_apis": [],
+            "confirm_patterns": [
+              "MAGUS_ORACLE_FLAW name=AddDllDirectory reason=tainted_dll_search_directory",
+              "MAGUS_ORACLE_FLAW name=SearchPathA reason=tainted_search_path_api",
+              "MAGUS_ORACLE_FLAW name=SearchPathW reason=tainted_search_path_api",
+              "MAGUS_ORACLE_FLAW name=SetDllDirectoryA reason=tainted_dll_search_directory",
+              "MAGUS_ORACLE_FLAW name=SetDllDirectoryW reason=tainted_dll_search_directory",
+              "MAGUS_ORACLE_FLAW name=SetEnvironmentVariableA reason=tainted_search_path_environment",
+              "MAGUS_ORACLE_FLAW name=SetEnvironmentVariableW reason=tainted_search_path_environment",
+              "MAGUS_ORACLE_FLAW name=_putenv reason=tainted_search_path_environment",
+              "MAGUS_ORACLE_FLAW name=_wputenv reason=tainted_search_path_environment",
+              "MAGUS_ORACLE_FLAW name=putenv reason=tainted_search_path_environment"
+            ],
+            "capability_patterns": [],
+            "accepted_evidence": [
+              "route-bound search path API or PATH update consumed attacker-controlled path text"
+            ],
+            "semantic_model": {}
+          },
           "api_sequence": [
             "parse_request -> ASN1_OCTET_STRING_new -> use pointer"
           ],
@@ -26,29 +52,38 @@
           "payload": {
             "marker": "memberD_source_api_probe_hyp_source_api_exec_0001",
             "entry_symbol": "parse_request",
+            "input_source": null,
+            "seed_inputs": [
+              "empty input",
+              "malformed serialized bytes",
+              "allocation failure path"
+            ]
+          },
+          "oracle": {
+            "failure_patterns": [
+              "AddressSanitizer",
+              "null pointer"
+            ],
+            "expect_nonzero_exit": true,
+            "profile_id": "path.untrusted_search_path",
+            "profile_supported": true
+          },
+          "verification_context": {
+            "repo_path": "01_demo_test/mock_source_project",
+            "run_cmd": "${PYTHON} poc.py",
+            "oracle": {
+              "failure_patterns": [
+                "AddressSanitizer",
+                "null pointer"
+              ],
+              "expect_nonzero_exit": true
+            },
             "input_source": "mock malformed DER certificate file",
             "seed_inputs": [
               "empty DER",
               "oversized DER",
               "malformed bytes"
             ]
-          },
-          "oracle": {
-            "accepted_evidence": [
-              "ASan/UBSan crash",
-              "non-zero test exit caused by crafted source/API input",
-              "unexpected success on invalid API state",
-              "differential behavior between vulnerable and fixed revision"
-            ],
-            "failure_patterns": [
-              "AddressSanitizer",
-              "null pointer"
-            ],
-            "expect_nonzero_exit": true
-          },
-          "execution": {
-            "repo_path": "01_demo_test/mock_source_project",
-            "run_cmd": "${PYTHON} poc.py"
           }
         }
       }

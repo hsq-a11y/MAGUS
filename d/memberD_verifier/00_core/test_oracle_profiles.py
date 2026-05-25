@@ -18,6 +18,21 @@ class OracleProfileSelectionTests(unittest.TestCase):
         self.assertIn("LoadLibraryA", profile["matched_apis"])
         self.assertIn("MAGUS_ORACLE_FLAW name=LoadLibraryA reason=relative_library_path", profile["confirm_patterns"])
 
+    def test_selects_generic_cwe114_wrapper_without_expanded_sink(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "recv -> dataVector -> case0Sink",
+                "claim": "network data reaches a CWE114 process-control sink through a container wrapper",
+                "cwe_candidates": ["CWE-114"],
+                "evidence_slice": "case0Sink(dataVector);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "process.untrusted_library_load")
+        self.assertTrue(profile["supported"])
+        self.assertEqual(profile["matched_apis"], [])
+        self.assertIn("MAGUS_ORACLE_FLAW name=LoadLibraryA reason=relative_library_path", profile["confirm_patterns"])
+
     def test_selects_command_execution_without_cwe(self):
         profile = oracle_profiles.build_oracle_profile(
             {
@@ -30,6 +45,76 @@ class OracleProfileSelectionTests(unittest.TestCase):
         self.assertEqual(profile["profile_id"], "process.command_execution")
         self.assertTrue(profile["supported"])
         self.assertIn("MAGUS_ORACLE_SINK name=system tainted=1", profile["confirm_patterns"])
+
+    def test_selects_generic_command_execution_without_expanded_sink(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "recv -> command_wrapper",
+                "claim": "CWE-78 command injection through an indirect sink wrapper",
+                "cwe_candidates": ["CWE-78"],
+                "evidence_slice": "command_wrapper(data);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "process.command_execution")
+        self.assertTrue(profile["supported"])
+        self.assertEqual(profile["matched_apis"], [])
+        self.assertIn("MAGUS_ORACLE_SINK name=system tainted=1", profile["confirm_patterns"])
+
+    def test_selects_memory_oob_write_for_cwe122(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "recv -> atoi -> buffer[data]",
+                "claim": "network input is used as an array index without an upper bound check",
+                "cwe_candidates": ["CWE-122", "CWE-129"],
+                "evidence_slice": "if (data >= 0) { buffer[data] = 1; }",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "memory.out_of_bounds_write")
+        self.assertTrue(profile["supported"])
+        self.assertIn("heap-buffer-overflow", profile["confirm_patterns"])
+        self.assertEqual(profile["semantic_model"]["bug_class"], "out_of_bounds_write")
+
+    def test_selects_memory_oob_read_for_cwe126(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "recv -> index -> buffer[data]",
+                "claim": "network input can cause an out-of-bounds read",
+                "cwe_candidates": ["CWE-126"],
+                "evidence_slice": "printIntLine(buffer[data]);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "memory.out_of_bounds_read")
+        self.assertTrue(profile["supported"])
+        self.assertIn("heap-buffer-overflow", profile["confirm_patterns"])
+
+    def test_selects_use_after_free_for_cwe416(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "free -> reuse",
+                "claim": "freed memory can be used again",
+                "cwe_candidates": ["CWE-416"],
+                "evidence_slice": "free(data); data[0] = 'x';",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "memory.use_after_free")
+        self.assertIn("heap-use-after-free", profile["confirm_patterns"])
+
+    def test_selects_integer_overflow_for_cwe190(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "recv -> atoi -> multiply",
+                "claim": "input can trigger signed integer overflow",
+                "cwe_candidates": ["CWE-190"],
+                "evidence_slice": "data = data * 2;",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "integer.overflow")
+        self.assertIn("runtime error: signed integer overflow", profile["confirm_patterns"])
 
     def test_selects_path_environment_update_without_cwe(self):
         profile = oracle_profiles.build_oracle_profile(

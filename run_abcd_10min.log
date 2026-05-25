@@ -1,0 +1,9 @@
+python3 pipeline.py abcd --a-input a/input/srcs.in.jsonl --a-output a/out/samples.raw.jsonl --b-output-dir b/b_output --c-output c/out/hypotheses.jsonl --min-support 3 --report-root report  --c-time-limit-seconds 600 --d-contexts d/memberD_verifier/02_run_with_C/verification_contexts.srcs_sanitized.jsonl
+[pipeline] report run name=srcs_sanitized
+[pipeline] Stage D output dir=/home/lxz/MAGUS/d/memberD_verifier/02_run_with_C/output/srcs_sanitized
+[pipeline] cwd=/home/lxz/MAGUS/a
+[pipeline] cmd=/home/lxz/MAGUS/.venv/bin/python3 cmd/miner.py --input /home/lxz/MAGUS/a/input/srcs.in.jsonl --output /home/lxz/MAGUS/a/out/samples.raw.jsonl
+mine failed for "srcs_sanitized" during build: command_failed
+wrote 0 samples to /home/lxz/MAGUS/a/out/samples.raw.jsonl
+Stage A failed for 1 project(s)
+make: *** [Makefile:69：run-abcd] 错误 1

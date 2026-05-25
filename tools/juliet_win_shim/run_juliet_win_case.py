@@ -32,11 +32,28 @@ RPC_NOT_PROPAGATED_MARKER = "MAGUS_ORACLE_FLAW name=RpcImpersonateClient reason=
 POSIX_FD_LIFECYCLE_PROFILE_ID = "resource.fd_lifecycle.user_posix"
 STDIO_LIFECYCLE_PROFILE_ID = "resource.stream_lifecycle.c_stdio"
 WIN32_HANDLE_LIFECYCLE_PROFILE_ID = "resource.handle_lifecycle.win32"
+MEMORY_OOB_PROFILE_ID = "memory.out_of_bounds_write"
+MEMORY_OOB_READ_PROFILE_ID = "memory.out_of_bounds_read"
+MEMORY_UAF_PROFILE_ID = "memory.use_after_free"
+INTEGER_OVERFLOW_PROFILE_ID = "integer.overflow"
 LIFECYCLE_CAPABILITY_ENV = {
     POSIX_FD_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_FD_LEAKS",
     STDIO_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_STREAM_LEAKS",
     WIN32_HANDLE_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_HANDLE_LEAKS",
 }
+SANITIZER_EVIDENCE_PATTERNS = (
+    "AddressSanitizer",
+    "UndefinedBehaviorSanitizer",
+    "heap-buffer-overflow",
+    "stack-buffer-overflow",
+    "global-buffer-overflow",
+    "dynamic-stack-buffer-overflow",
+    "heap-use-after-free",
+    "stack-use-after-return",
+    "stack-use-after-scope",
+    "runtime error: signed integer overflow",
+    "runtime error: unsigned integer overflow",
+)
 SOURCE_SUFFIXES = (".c", ".cpp", ".cc", ".cxx")
 SCENARIO_LABELS = {"bad": "case0", "good": "case1"}
 COMPAT_HEADER = SHIM_DIR / "juliet_win_compat.h"
@@ -49,7 +66,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--route", default="", help="Full Stage C route; used to bind the dynamic run to bad/good scenario")
     parser.add_argument(
         "--payload",
-        default=os.environ.get("MAGUS_D_PAYLOAD", "magus-juliet-controlled-input"),
+        default=os.environ.get("MAGUS_D_RUNTIME_INPUT")
+        or os.environ.get("MAGUS_D_PAYLOAD", "magus-juliet-controlled-input"),
         help="Payload returned by shimmed external sources",
     )
     parser.add_argument(
@@ -79,6 +97,31 @@ def env_confirm_patterns() -> list[str]:
     if isinstance(payload, list):
         return [str(item) for item in payload if str(item)]
     return []
+
+
+def payload_candidates(default_payload: str) -> list[str]:
+    values: list[object] = []
+    raw = os.environ.get("MAGUS_D_RUNTIME_INPUTS_JSON", "").strip()
+    if raw:
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError:
+            decoded = []
+        if isinstance(decoded, list):
+            values.extend(decoded)
+        elif decoded not in (None, "", []):
+            values.append(decoded)
+    values.append(default_payload)
+
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
 
 
 def load_sanitization_map() -> dict[str, object]:
@@ -304,6 +347,18 @@ def configure_failure_environment(env: dict[str, str], source: Path, oracle_prof
         env[lifecycle_env] = "1"
 
 
+def sanitizer_flags_for(profile_id: str) -> list[str]:
+    if profile_id in {MEMORY_OOB_PROFILE_ID, MEMORY_OOB_READ_PROFILE_ID, MEMORY_UAF_PROFILE_ID}:
+        return ["-fsanitize=address", "-fno-omit-frame-pointer", "-g"]
+    if profile_id == INTEGER_OVERFLOW_PROFILE_ID:
+        return ["-fsanitize=undefined,signed-integer-overflow", "-fno-omit-frame-pointer", "-g"]
+    return []
+
+
+def has_sanitizer_evidence(output: str) -> bool:
+    return any(pattern in output for pattern in SANITIZER_EVIDENCE_PATTERNS)
+
+
 def compile_unit(command: list[str], tmp_path: Path) -> bool:
     build = run_checked(command, REPO_ROOT)
     if build.returncode == 0:
@@ -323,6 +378,7 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
     support_dir = support_dir_for(source)
     support_io = support_dir / "io.c"
     support_thread = support_dir / "std_thread.c"
+    sanitizer_flags = sanitizer_flags_for(args.oracle_profile_id)
 
     objects: list[Path] = []
     for index, unit in enumerate(companions):
@@ -331,6 +387,7 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
         command = [
             unit_compiler,
             "-c",
+            *sanitizer_flags,
             "-D_WIN32",
             "-DINCLUDEMAIN" if unit == entry_unit else "-DMAGUS_COMPANION_UNIT",
             omit_macro,
@@ -357,6 +414,7 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
         command = [
             compiler,
             "-c",
+            *sanitizer_flags,
             "-D_WIN32",
             *extra_macros,
             "-I",
@@ -372,19 +430,21 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
         objects.append(obj)
 
     binary = tmp_path / "case_under_test"
-    command = [link_compiler(companions, args), *[str(obj) for obj in objects], "-o", str(binary)]
+    command = [link_compiler(companions, args), *sanitizer_flags, *[str(obj) for obj in objects], "-o", str(binary)]
     if not compile_unit(command, tmp_path):
         return None, entry_unit
     return binary, entry_unit
 
 
-def route_was_executed(stdout: str, source: Path, scenario: str) -> bool:
+def route_was_executed(stdout: str, source: Path, scenario: str, oracle_output: str = "") -> bool:
     label = scenario_label(source, scenario)
     other_label = scenario_label(source, "good" if scenario == "bad" else "bad")
     expected_call = f"Calling {label}()..."
     expected_finish = f"Finished {label}()"
     unexpected_call = f"Calling {other_label}()..."
-    return expected_call in stdout and expected_finish in stdout and unexpected_call not in stdout
+    if expected_call in stdout and expected_finish in stdout and unexpected_call not in stdout:
+        return True
+    return expected_call in stdout and unexpected_call not in stdout and has_sanitizer_evidence(oracle_output)
 
 
 def oracle_confirmed(stdout: str, confirm_patterns: list[str]) -> tuple[bool, list[str]]:
@@ -439,52 +499,67 @@ def main() -> int:
         if binary is None:
             return 2
 
-        write_runtime_files(tmp_path, args.payload)
-        env = os.environ.copy()
-        env["MAGUS_JULIET_PAYLOAD"] = args.payload
-        env.setdefault("ADD", args.payload)
-        env.setdefault("WINDIR", r"C:\Windows")
-        configure_failure_environment(env, source, args.oracle_profile_id)
+        attempts = payload_candidates(args.payload)
+        any_route_executed = False
+        last_route_markers: list[str] = []
+        for attempt_index, payload in enumerate(attempts, 1):
+            print(
+                f"MAGUS_PAYLOAD_ATTEMPT index={attempt_index} total={len(attempts)} "
+                f"value={json.dumps(payload, ensure_ascii=False)}"
+            )
+            write_runtime_files(tmp_path, payload)
+            env = os.environ.copy()
+            env["MAGUS_JULIET_PAYLOAD"] = payload
+            env["MAGUS_JULIET_PAYLOAD_INDEX"] = str(attempt_index)
+            env["MAGUS_JULIET_PAYLOAD_COUNT"] = str(len(attempts))
+            env["ADD"] = payload
+            env.setdefault("WINDIR", r"C:\Windows")
+            configure_failure_environment(env, source, args.oracle_profile_id)
 
-        run = run_checked([str(binary)], tmp_path, env=env, stdin_text=args.payload + "\n")
-        raw_stdout = run.stdout or ""
-        raw_stderr = run.stderr or ""
-        generic_stdout = generic_oracle_output(raw_stdout)
-        print(generic_stdout, end="")
-        print(raw_stderr, end="", file=sys.stderr)
+            run = run_checked([str(binary)], tmp_path, env=env, stdin_text=payload + "\n")
+            raw_stdout = run.stdout or ""
+            raw_stderr = run.stderr or ""
+            generic_stdout = generic_oracle_output(raw_stdout)
+            oracle_output = generic_stdout + "\n" + raw_stderr
+            print(generic_stdout, end="")
+            print(raw_stderr, end="", file=sys.stderr)
 
-        route_executed = route_was_executed(raw_stdout, source, scenario)
-        semantic_markers = route_bound_semantic_markers(raw_stdout, route_executed)
-        capability_markers = oracle_capability_markers(args.oracle_profile_id, env) if route_executed else []
-        for marker in semantic_markers:
-            print(marker)
-        for marker in capability_markers:
-            print(marker)
-        route_bound_markers = [*semantic_markers, *capability_markers]
-        oracle_stdout = generic_stdout + ("\n" + "\n".join(route_bound_markers) if route_bound_markers else "")
-        confirmed, matched_patterns = oracle_confirmed(oracle_stdout, args.confirm_pattern)
+            route_executed = route_was_executed(raw_stdout, source, scenario, oracle_output)
+            if route_executed:
+                any_route_executed = True
+            semantic_markers = route_bound_semantic_markers(raw_stdout, route_executed)
+            capability_markers = oracle_capability_markers(args.oracle_profile_id, env) if route_executed else []
+            for marker in semantic_markers:
+                print(marker)
+            for marker in capability_markers:
+                print(marker)
+            route_bound_markers = [*semantic_markers, *capability_markers]
+            if route_bound_markers:
+                last_route_markers = route_bound_markers
+            oracle_stdout = oracle_output + ("\n" + "\n".join(route_bound_markers) if route_bound_markers else "")
+            confirmed, matched_patterns = oracle_confirmed(oracle_stdout, args.confirm_pattern)
 
-        if route_executed:
+            if route_executed and confirmed:
+                print(
+                    f"{ROUTE_EXECUTED_MARKER} scenario={scenario} "
+                    f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} "
+                    f"payload_attempt={attempt_index}"
+                )
+                print(
+                    f"{ROUTE_CONFIRMED_MARKER} scenario={scenario} "
+                    f"oracle_profile_id={args.oracle_profile_id or '<unknown>'} "
+                    f"matched_patterns={json.dumps(matched_patterns, ensure_ascii=False)} "
+                    f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} "
+                    f"payload_attempt={attempt_index}"
+                )
+                return 0
+
+        if any_route_executed:
             print(
                 f"{ROUTE_EXECUTED_MARKER} scenario={scenario} "
-                f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source}"
+                f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} "
+                f"payload_attempts={len(attempts)}"
             )
-        else:
-            print(
-                f"{NOT_ROUTE_BOUND_MARKER} expected_scenario={scenario} "
-                f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} main_source={entry_unit}"
-            )
-
-        if route_executed and confirmed:
-            print(
-                f"{ROUTE_CONFIRMED_MARKER} scenario={scenario} "
-                f"oracle_profile_id={args.oracle_profile_id or '<unknown>'} "
-                f"matched_patterns={json.dumps(matched_patterns, ensure_ascii=False)} "
-                f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source}"
-            )
-            return 0
-
-        if route_executed:
             reason = unsupported_oracle_reason(args.confirm_pattern, args.oracle_profile_id)
             if reason:
                 print(
@@ -493,7 +568,14 @@ def main() -> int:
                     f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source}"
                 )
                 return 3
+        else:
+            print(
+                f"{NOT_ROUTE_BOUND_MARKER} expected_scenario={scenario} "
+                f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} main_source={entry_unit}"
+            )
 
+        for marker in last_route_markers:
+            print(marker)
         print(NOT_CONFIRMED_MARKER)
         print(f"entry_symbol={args.entry_symbol}")
         print(f"route={args.route}")

@@ -1,11 +1,11 @@
 # Member D Verification Summary
 
-- generated_at: 2026-05-21T06:42:07Z
+- generated_at: 2026-05-24T11:42:33Z
 - target_type: source_api
+- reportable: 1
 - confirmed: 1
+- stage_c_preserved: 0
 - failed: 0
-- final_report_jsonl: verification.report.jsonl
-- final_report_md: verification.report.md
 
 ## Confirmed P0
 
