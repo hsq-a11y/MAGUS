@@ -14,6 +14,7 @@ DEFAULT_INCLUDE_DIRS = (
     "juliet-api-misuse/testcasesupport",
 )
 DEFAULT_DEFINES = ("_WIN32",)
+DEFAULT_CXX_FLAGS = ("-fms-extensions",)
 DEFAULT_FORCE_INCLUDES = (
     str(WORKSPACE_ROOT / "tools" / "juliet_win_shim" / "juliet_win_compat.h"),
 )
@@ -145,6 +146,10 @@ def compiler_for(source_path: Path, cc: str, cxx: str) -> str:
     return cc if source_path.suffix.lower() == ".c" else cxx
 
 
+def compiler_flags_for(source_path: Path) -> list[str]:
+    return [] if source_path.suffix.lower() == ".c" else list(DEFAULT_CXX_FLAGS)
+
+
 def compile_record(
     repo_path: Path,
     source_path: Path,
@@ -155,6 +160,7 @@ def compile_record(
     cxx: str,
 ) -> dict[str, Any]:
     arguments = [compiler_for(source_path, cc, cxx)]
+    arguments.extend(compiler_flags_for(source_path))
     for define_value in define_values:
         arguments.append(f"-D{define_value}")
     for include_path in include_paths:

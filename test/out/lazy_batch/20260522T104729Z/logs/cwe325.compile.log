@@ -1,4 +1,0 @@
-[2026-05-22T11:48:03Z] cwd=/home/sq_hu/MAGUS
-[2026-05-22T11:48:03Z] cmd=/usr/bin/python3 tools/gen_srcs_compile_commands.py --repo-path srcs_sanitized --output srcs_sanitized/compile_commands.cwe325.json --source-glob 'juliet-api-misuse/testcases/CWE325_Missing_Required_Cryptographic_Step/**/*.c' --source-glob 'juliet-api-misuse/testcases/CWE325_Missing_Required_Cryptographic_Step/**/*.cc' --source-glob 'juliet-api-misuse/testcases/CWE325_Missing_Required_Cryptographic_Step/**/*.cpp' --source-glob 'juliet-api-misuse/testcases/CWE325_Missing_Required_Cryptographic_Step/**/*.cxx' --include-dir ../tools/juliet_win_shim --include-dir juliet-api-misuse/testcasesupport --force
-[2026-05-22T11:48:03Z] wrote 73 compile commands to /home/sq_hu/MAGUS/srcs_sanitized/compile_commands.cwe325.json
-[2026-05-22T11:48:03Z] returncode=0

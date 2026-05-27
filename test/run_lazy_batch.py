@@ -18,32 +18,19 @@ from typing import Any, Callable
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LAZY_MD = REPO_ROOT / "test" / "lazy.md"
 DEFAULT_OUT_ROOT = REPO_ROOT / "test" / "out" / "lazy_batch"
-DEFAULT_C_TIME_LIMIT_SECONDS = 7200.0
 DEFAULT_MISMATCH_THRESHOLD = 0.10
 RUN_LINE_RE = re.compile(r"run_juliet_folder\s+'([^']+)'\s+'([^']+)'")
 ADAPTED_CWE_IDS = {
-    "cwe247",
-    "cwe338",
-    "cwe377",
-    "cwe785",
-    "cwe325",
-    "cwe327",
-    "cwe328",
-    "cwe780",
-    "cwe591",
-    "cwe273",
-    "cwe252",
-    "cwe253",
-    "cwe404",
-    "cwe672",
-    "cwe675",
-    "cwe773",
-    "cwe775",
-    "cwe426",
-    "cwe427",
     "cwe78",
     "cwe90",
     "cwe319",
+    "cwe404",
+    "cwe672",
+    "cwe675",
+    "cwe775",
+    "cwe426",
+    "cwe427",
+    "cwe252",
 }
 JSONL_NAMES = {
     "b_candidates": "candidates.for_c.jsonl",
@@ -222,10 +209,6 @@ def parse_c_line(line: str, stats: dict[str, int]) -> None:
     if match:
         stats["c_llm_audited"] = int(match.group(1))
         stats["c_candidates_total"] = int(match.group(2))
-        return
-    match = re.search(r"\[C\] skipped by time budget:\s+(\d+)", line)
-    if match:
-        stats["c_skipped_by_time_budget"] = int(match.group(1))
         return
     match = re.search(r"\[C\] D candidates:\s+(\d+)", line)
     if match:
@@ -455,8 +438,6 @@ def build_eval_command(folder: JulietFolder, args: argparse.Namespace, eval_dir:
         str(b_output_dir(folder.cwe_id).relative_to(REPO_ROOT)),
         "--c-output",
         str(c_output_path(folder.cwe_id).relative_to(REPO_ROOT)),
-        "--c-time-limit-seconds",
-        str(args.c_time_limit_seconds),
         "--report-run-name",
         run_name,
         "--d-contexts",
@@ -562,7 +543,6 @@ def row_from_summary(
         "eval_command_seconds": round_metric(eval_result.duration_seconds),
         "abcd_elapsed_seconds": timing.get("elapsed_seconds"),
         "abcd_elapsed_hms": timing.get("elapsed_hms"),
-        "c_time_limit_seconds": args.c_time_limit_seconds,
         "c_started_at": isoformat_z(eval_result.c_started_at) if eval_result.c_started_at else "",
         "c_finished_at": isoformat_z(eval_result.c_finished_at) if eval_result.c_finished_at else "",
         "c_duration_seconds": round_metric(c_duration),
@@ -591,7 +571,6 @@ CSV_FIELDS = [
     "b_candidates",
     "c_candidates_total",
     "c_llm_audited",
-    "c_skipped_by_time_budget",
     "c_hypotheses",
     "c_d_candidates",
     "c_p0_routed_to_d",
@@ -620,7 +599,6 @@ CSV_FIELDS = [
     "eval_command_seconds",
     "abcd_elapsed_seconds",
     "abcd_elapsed_hms",
-    "c_time_limit_seconds",
     "c_duration_seconds",
     "c_duration_hms",
     "source_files_per_c_min",
@@ -753,7 +731,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--lazy-md", default=DEFAULT_LAZY_MD, type=Path, help="lazy.md file to parse for CWE order")
     parser.add_argument("--out-root", default=DEFAULT_OUT_ROOT, type=Path, help="Batch output root")
     parser.add_argument("--run-id", default="", help="Output run id; defaults to current UTC timestamp")
-    parser.add_argument("--c-time-limit-seconds", default=DEFAULT_C_TIME_LIMIT_SECONDS, type=float)
     parser.add_argument("--mismatch-threshold", default=DEFAULT_MISMATCH_THRESHOLD, type=float)
     parser.add_argument(
         "--threshold-denominator",
@@ -774,8 +751,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     args.lazy_md = args.lazy_md.resolve()
     args.out_root = args.out_root.resolve()
-    if args.c_time_limit_seconds <= 0:
-        raise ValueError("--c-time-limit-seconds must be greater than 0")
     if args.mismatch_threshold < 0:
         raise ValueError("--mismatch-threshold must be non-negative")
 
@@ -799,7 +774,6 @@ def main(argv: list[str] | None = None) -> int:
         {
             "lazy_md": str(args.lazy_md),
             "selected": [folder.__dict__ for folder in folders],
-            "c_time_limit_seconds": args.c_time_limit_seconds,
             "mismatch_threshold": args.mismatch_threshold,
             "threshold_denominator": args.threshold_denominator,
             "prepare": args.prepare,

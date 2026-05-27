@@ -2,7 +2,7 @@
 
 `evaluate_juliet_report.py` compares the MAGUS final report with Juliet ground truth and writes paper-ready evaluation artifacts.
 
-`run_lazy_batch.py` is the monitored batch wrapper for Juliet source/API misuse folders that are already adapted to the Stage D marker/oracle model. It reads the ordered queue in `test/lazy.md`, runs one CWE folder at a time, records when the configured mismatch threshold is exceeded, continues to the next folder, and writes logs plus per-folder metrics under `test/out/lazy_batch/<run-id>/`.
+`run_lazy_batch.py` is the monitored batch wrapper for Juliet source/API misuse folders that are already adapted to the Stage D marker/oracle model. It reads the ordered queue in `test/lazy.md`, runs one CWE folder at a time without imposing a Stage C time budget, records when the configured mismatch threshold is exceeded, continues to the next folder, and writes logs plus per-folder metrics under `test/out/lazy_batch/<run-id>/`.
 
 Default inputs:
 
@@ -150,6 +150,17 @@ python3 test/evaluate_juliet_report.py \
   --scope-compile-commands srcs_sanitized/compile_commands.json \
   --stage-a-start 2026-05-20T10:00:00Z
 ```
+
+For a D-only or report-only rerun, omit `--stage-a-start` unless the original Stage A start time is known. For example, the CWE78 D rerun over the existing Stage C hypotheses was evaluated with:
+
+```bash
+python3 test/evaluate_juliet_report.py \
+  --report report/CWE78_OS_Command_Injection/verification.report.jsonl \
+  --scope-compile-commands srcs_sanitized/compile_commands.cwe78.json \
+  --out-dir test/out/juliet_eval/CWE78_OS_Command_Injection_d_rerun_20260527T1518Z
+```
+
+That benchmark evaluation produced 3,378 report rows, 3,089 unique true-positive Juliet cases out of 4,801 truth-positive cases, 0 false-positive rows, 1,712 false-negative cases, 100.00% precision, and 64.34% recall. Because this was a D-only/report-only rerun rather than a fresh `pipeline.py abcd` run, the elapsed Stage A-to-report metric is intentionally absent.
 
 Generated artifacts:
 

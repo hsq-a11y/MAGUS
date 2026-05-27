@@ -21,7 +21,7 @@ BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 API_KEY_ENV_VARS = ("DEEPSEEK_API_KEY", "OPENAI_API_KEY")
 CONFIDENCE_THRESHOLD = 0.60               # 放宽到0.60，让更多假设进入D阶段（原0.65）
 STATIC_CONFIDENCE_THRESHOLD = 0.90        # P0：静态强确认；已完成结果进入D做route-bound验证
-MAX_WORKERS = 5                           # 并发线程数，平衡速度与稳定性
+MAX_WORKERS = 20                          # 默认并发进程数
 LLM_MAX_OUTPUT_TOKENS = 4096              # max_tokens只限制模型输出长度，不扩大输入上下文
 LLM_REQUEST_TIMEOUT_SECONDS = 60.0        # 单次LLM请求上限，会被全局deadline进一步收紧
 LLM_JSON_RETRY_ATTEMPTS = 1               # JSON解析失败后额外重试次数
@@ -52,12 +52,23 @@ def llm_client():
 
 
 # ==================== 数据加载模块 ====================
+def positive_int(raw):
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer") from exc
+    if value <= 0:
+        raise argparse.ArgumentTypeError("must be greater than 0")
+    return value
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="C阶段：基于B阶段C-ready候选执行双Agent审计")
     parser.add_argument("--candidates", default="data/candidates.for_c.jsonl", help="B阶段输出的 candidates.for_c.jsonl")
     parser.add_argument("--output", default="data/hypotheses.jsonl", help="C阶段输出给D验证的 hypotheses.jsonl")
     parser.add_argument("--audit-output", default="", help="P3和错误审计日志；默认从 --output 推导")
     parser.add_argument("--time-limit-seconds", type=float, default=None, help="C阶段提交候选的时间预算；默认不限制")
+    parser.add_argument("--workers", type=positive_int, default=MAX_WORKERS, help=f"C阶段并发worker进程数；默认{MAX_WORKERS}")
     return parser.parse_args()
 
 
@@ -1267,9 +1278,11 @@ def process_hypothesis_record(hyp, cand, d_file, audit_file):
     return process_completed_future(CompletedFuture(hyp), cand, d_file, audit_file)
 
 
-def run_audit_queue(candidates, time_limit_seconds, d_file, audit_file):
+def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_file):
     if time_limit_seconds is not None and time_limit_seconds <= 0:
         raise ValueError("--time-limit-seconds must be greater than 0")
+    if worker_count <= 0:
+        raise ValueError("--workers must be greater than 0")
 
     deadline = None if time_limit_seconds is None else time.monotonic() + time_limit_seconds
     grace_deadline = None if deadline is None else deadline + POST_DEADLINE_GRACE_SECONDS
@@ -1298,7 +1311,7 @@ def run_audit_queue(candidates, time_limit_seconds, d_file, audit_file):
 
     def submit_available():
         nonlocal submitted_count, next_index
-        while len(running) < MAX_WORKERS and next_index < len(candidates) and within_budget():
+        while len(running) < worker_count and next_index < len(candidates) and within_budget():
             cand = candidates[next_index]
             next_index += 1
             process = ctx.Process(target=audit_worker, args=(cand, deadline, result_queue))
@@ -1442,10 +1455,12 @@ def main():
         counts, submitted_count, skipped_count = run_audit_queue(
             candidates,
             args.time_limit_seconds,
+            args.workers,
             d_file,
             audit_file,
         )
 
+    print(f"[C] workers: {args.workers}")
     print(f"[C] LLM-audited candidates: {submitted_count}/{len(candidates)}")
     if skipped_count:
         print(f"[C] skipped by time budget: {skipped_count}")

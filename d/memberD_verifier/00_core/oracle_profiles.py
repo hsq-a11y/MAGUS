@@ -250,15 +250,29 @@ PROFILES: Tuple[OracleProfile, ...] = (
         api_markers={
             "system": ("MAGUS_ORACLE_SINK name=system tainted=1",),
             "_wsystem": ("MAGUS_ORACLE_SINK name=_wsystem tainted=1",),
-            "popen": ("MAGUS_ORACLE_SINK name=popen tainted=1",),
+            "popen": (
+                "MAGUS_ORACLE_SINK name=popen tainted=1",
+                "MAGUS_ORACLE_SINK name=_popen tainted=1",
+                "MAGUS_ORACLE_SINK name=_wpopen tainted=1",
+            ),
+            "_popen": ("MAGUS_ORACLE_SINK name=_popen tainted=1",),
+            "_wpopen": ("MAGUS_ORACLE_SINK name=_wpopen tainted=1",),
             "_spawnl": ("MAGUS_ORACLE_SINK name=_spawnl tainted=1",),
             "_spawnlp": ("MAGUS_ORACLE_SINK name=_spawnlp tainted=1",),
             "_spawnv": ("MAGUS_ORACLE_SINK name=_spawnv tainted=1",),
             "_spawnvp": ("MAGUS_ORACLE_SINK name=_spawnvp tainted=1",),
+            "_wspawnl": ("MAGUS_ORACLE_SINK name=_wspawnl tainted=1",),
+            "_wspawnlp": ("MAGUS_ORACLE_SINK name=_wspawnlp tainted=1",),
+            "_wspawnv": ("MAGUS_ORACLE_SINK name=_wspawnv tainted=1",),
+            "_wspawnvp": ("MAGUS_ORACLE_SINK name=_wspawnvp tainted=1",),
             "_execl": ("MAGUS_ORACLE_SINK name=_execl tainted=1",),
             "_execlp": ("MAGUS_ORACLE_SINK name=_execlp tainted=1",),
             "_execv": ("MAGUS_ORACLE_SINK name=_execv tainted=1",),
             "_execvp": ("MAGUS_ORACLE_SINK name=_execvp tainted=1",),
+            "_wexecl": ("MAGUS_ORACLE_SINK name=_wexecl tainted=1",),
+            "_wexeclp": ("MAGUS_ORACLE_SINK name=_wexeclp tainted=1",),
+            "_wexecv": ("MAGUS_ORACLE_SINK name=_wexecv tainted=1",),
+            "_wexecvp": ("MAGUS_ORACLE_SINK name=_wexecvp tainted=1",),
             "CreateProcessA": ("MAGUS_ORACLE_SINK name=CreateProcessA tainted=1",),
             "CreateProcessW": ("MAGUS_ORACLE_SINK name=CreateProcessW tainted=1",),
         },
@@ -266,6 +280,24 @@ PROFILES: Tuple[OracleProfile, ...] = (
             "MAGUS_ORACLE_SINK name=system tainted=1",
             "MAGUS_ORACLE_SINK name=_wsystem tainted=1",
             "MAGUS_ORACLE_SINK name=popen tainted=1",
+            "MAGUS_ORACLE_SINK name=_popen tainted=1",
+            "MAGUS_ORACLE_SINK name=_wpopen tainted=1",
+            "MAGUS_ORACLE_SINK name=_spawnl tainted=1",
+            "MAGUS_ORACLE_SINK name=_spawnlp tainted=1",
+            "MAGUS_ORACLE_SINK name=_spawnv tainted=1",
+            "MAGUS_ORACLE_SINK name=_spawnvp tainted=1",
+            "MAGUS_ORACLE_SINK name=_wspawnl tainted=1",
+            "MAGUS_ORACLE_SINK name=_wspawnlp tainted=1",
+            "MAGUS_ORACLE_SINK name=_wspawnv tainted=1",
+            "MAGUS_ORACLE_SINK name=_wspawnvp tainted=1",
+            "MAGUS_ORACLE_SINK name=_execl tainted=1",
+            "MAGUS_ORACLE_SINK name=_execlp tainted=1",
+            "MAGUS_ORACLE_SINK name=_execv tainted=1",
+            "MAGUS_ORACLE_SINK name=_execvp tainted=1",
+            "MAGUS_ORACLE_SINK name=_wexecl tainted=1",
+            "MAGUS_ORACLE_SINK name=_wexeclp tainted=1",
+            "MAGUS_ORACLE_SINK name=_wexecv tainted=1",
+            "MAGUS_ORACLE_SINK name=_wexecvp tainted=1",
             "MAGUS_ORACLE_SINK name=CreateProcessA tainted=1",
             "MAGUS_ORACLE_SINK name=CreateProcessW tainted=1",
         ),
@@ -827,33 +859,45 @@ PROFILES: Tuple[OracleProfile, ...] = (
 API_NAMES = tuple(sorted({api for profile in PROFILES for api in profile.api_names}, key=len, reverse=True))
 PROFILE_BY_ID = {profile.profile_id: profile for profile in PROFILES}
 
-JULIET_RESOURCE_SOURCE_RES: Tuple[re.Pattern[str], ...] = (
-    re.compile(
-        r"CWE404_Improper_Resource_Shutdown__([A-Za-z0-9]+)_([A-Za-z0-9]+)_",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"CWE675_Duplicate_Operations_on_Resource__([A-Za-z0-9]+)_",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"CWE775_Missing_Release_of_File_Descriptor_or_Handle__([A-Za-z0-9]+)_",
-        re.IGNORECASE,
-    ),
-)
-
-JULIET_RESOURCE_SOURCE_PROFILES = {
-    "open": POSIX_FD_PROFILE_ID,
-    "fopen": STDIO_PROFILE_ID,
-    "freopen": STDIO_PROFILE_ID,
-    "w32createfile": WIN32_HANDLE_PROFILE_ID,
-}
-
 RESOURCE_LIFECYCLE_API_NAMES = frozenset(
     (*POSIX_FD_ACQUIRE_APIS, *POSIX_FD_RELEASE_APIS, *POSIX_FD_TRANSFER_APIS, *POSIX_FD_DUP_APIS)
     + (*STDIO_ACQUIRE_APIS, *STDIO_RELEASE_APIS)
     + (*WIN32_HANDLE_ACQUIRE_APIS, *WIN32_HANDLE_RELEASE_APIS, *WIN32_HANDLE_DUP_APIS)
     + (*LINUX_KERNEL_ACQUIRE_APIS, *LINUX_KERNEL_RELEASE_APIS)
+)
+
+RESOURCE_ORIGIN_PROFILE_IDS = {
+    **{api: POSIX_FD_PROFILE_ID for api in (*POSIX_FD_ACQUIRE_APIS, *POSIX_FD_DUP_APIS)},
+    **{api: STDIO_PROFILE_ID for api in STDIO_ACQUIRE_APIS},
+    **{api: WIN32_HANDLE_PROFILE_ID for api in (*WIN32_HANDLE_ACQUIRE_APIS, *WIN32_HANDLE_DUP_APIS)},
+    **{api: LINUX_KERNEL_PROFILE_ID for api in LINUX_KERNEL_ACQUIRE_APIS},
+}
+
+RESOURCE_LIFECYCLE_CWES = ("404", "675", "773", "775")
+RESOURCE_LIFECYCLE_TERMS = (
+    "resource lifecycle",
+    "missing release",
+    "missing close",
+    "missing fclose",
+    "missing closehandle",
+    "not closed",
+    "no close",
+    "without close",
+    "descriptor leak",
+    "stream leak",
+    "handle leak",
+    "wrong release",
+    "wrong close",
+    "wrong release api",
+    "wrong api family",
+    "duplicate release",
+    "duplicate close",
+    "double close",
+    "closed twice",
+    "released twice",
+    "use after close",
+    "use after release",
+    "ownership transfer",
 )
 
 CWE672_CONTAINER_TERMS = (
@@ -908,6 +952,12 @@ def _has_cwe_token(haystack_lower: str, cwe_number: str) -> bool:
     return _contains_token(haystack_lower, f"cwe-{cwe_number}") or _contains_token(haystack_lower, f"cwe{cwe_number}")
 
 
+def _has_resource_lifecycle_semantics(haystack_lower: str) -> bool:
+    if any(_has_cwe_token(haystack_lower, cwe_number) for cwe_number in RESOURCE_LIFECYCLE_CWES):
+        return True
+    return any(term in haystack_lower or _contains_token(haystack_lower, term) for term in RESOURCE_LIFECYCLE_TERMS)
+
+
 def _is_cwe672_container_lifetime(haystack_lower: str, api_names: List[str]) -> bool:
     if not _has_cwe_token(haystack_lower, "672"):
         return False
@@ -916,18 +966,21 @@ def _is_cwe672_container_lifetime(haystack_lower: str, api_names: List[str]) -> 
     return any(term in haystack_lower or _contains_token(haystack_lower, term) for term in CWE672_CONTAINER_TERMS)
 
 
-def _select_juliet_resource_profile(haystack: str, api_names: List[str]) -> Tuple[OracleProfile | None, List[str], int]:
-    source_api = ""
-    for pattern in JULIET_RESOURCE_SOURCE_RES:
-        match = pattern.search(haystack)
-        if match:
-            source_api = match.group(1).lower()
-            break
-    if not source_api:
+def _select_resource_origin_profile(haystack_lower: str, api_names: List[str]) -> Tuple[OracleProfile | None, List[str], int]:
+    if not _has_resource_lifecycle_semantics(haystack_lower):
         return None, api_names, 0
-    profile_id = JULIET_RESOURCE_SOURCE_PROFILES.get(source_api)
-    if not profile_id:
+
+    origin_apis: List[Tuple[int, str]] = []
+    for api in api_names:
+        if api not in RESOURCE_ORIGIN_PROFILE_IDS:
+            continue
+        match = re.search(rf"(?<![a-z0-9_]){re.escape(api.lower())}(?![a-z0-9_])", haystack_lower)
+        origin_apis.append((match.start() if match else len(haystack_lower), api))
+    if not origin_apis:
         return None, api_names, 0
+
+    origin_apis.sort(key=lambda item: item[0])
+    profile_id = RESOURCE_ORIGIN_PROFILE_IDS[origin_apis[0][1]]
     profile = PROFILE_BY_ID.get(profile_id)
     if profile is None:
         return None, api_names, 0
@@ -936,17 +989,16 @@ def _select_juliet_resource_profile(haystack: str, api_names: List[str]) -> Tupl
 
 
 def select_profile(hypothesis: Dict[str, Any]) -> Tuple[OracleProfile | None, List[str], int]:
-    haystack = hypothesis_text(hypothesis)
-    haystack_lower = haystack.lower()
+    haystack_lower = hypothesis_text(hypothesis).lower()
     api_names = infer_api_names(hypothesis)
     if _is_cwe672_container_lifetime(haystack_lower, api_names):
         profile = PROFILE_BY_ID.get(CPP_ITERATOR_PROFILE_ID)
         if profile is not None:
             return profile, [], 100
 
-    juliet_profile, juliet_matched, juliet_score = _select_juliet_resource_profile(haystack, api_names)
-    if juliet_profile is not None:
-        return juliet_profile, juliet_matched, juliet_score
+    resource_profile, resource_matched, resource_score = _select_resource_origin_profile(haystack_lower, api_names)
+    if resource_profile is not None:
+        return resource_profile, resource_matched, resource_score
 
     best: Tuple[OracleProfile | None, int] = (None, 0)
     for profile in PROFILES:

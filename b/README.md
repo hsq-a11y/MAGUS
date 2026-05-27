@@ -38,7 +38,7 @@ From the repository root:
 make run-b
 ```
 
-The root Stage `A` command emits both `samples.stats.jsonl` and `samples.llm.jsonl`; Stage `B` consumes both files so it can prepare the C-ready queue. Use `make run-abcd` for the full `A -> B -> streamed C/D -> Report` chain, where Stage `D` verifies complete Stage `C` JSONL records as they are flushed and Report generates the final vulnerability report under `report/<run-name>/` from the D output. Stage `C` writes `P1`/`P2` records to that stream, and also writes completed `P0` records so D can route-bound verify them.
+The root Stage `A` command emits both `samples.stats.jsonl` and `samples.llm.jsonl`; Stage `B` consumes both files so it can prepare the C-ready queue. Use `make run-abcd` for the full `A -> B -> streamed C/D -> Report` chain, where Stage `D` verifies complete Stage `C` JSONL records as they are flushed and Report generates the final vulnerability report under `report/<run-name>/` from the D output. Stage `C` runs with 20 worker processes by default, overridable with `C_WORKERS` or `pipeline.py abcd --c-workers`. Stage `C` writes `P1`/`P2` records to that stream, and also writes completed `P0` records so D can route-bound verify them.
 
 Or directly from `b/`:
 

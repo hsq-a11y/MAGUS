@@ -28,11 +28,22 @@ DEFAULT_STAGE_A_GENERATED_INPUT = STAGE_A_DIR / "input/srcs.in.jsonl"
 DEFAULT_SOURCE_ROOT = REPO_ROOT / "srcs_sanitized"
 DEFAULT_STAGE_B_OUTPUT_DIR = STAGE_B_DIR / "b_output"
 DEFAULT_STAGE_C_OUTPUT = STAGE_C_DIR / "out/hypotheses.jsonl"
+DEFAULT_STAGE_C_WORKERS = 20
 REPORT_RUN_NAME_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 def resolve_path(raw: str) -> Path:
     return Path(raw).expanduser().resolve()
+
+
+def positive_int(raw: str) -> int:
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer") from exc
+    if value <= 0:
+        raise argparse.ArgumentTypeError("must be greater than 0")
+    return value
 
 
 def normalize_report_run_name(raw: str) -> str:
@@ -237,6 +248,7 @@ def stage_c_command(
     candidates_path: Path,
     output_path: Path,
     time_limit_seconds: float | None,
+    workers: int,
 ) -> list[str]:
     command = [
         sys.executable,
@@ -245,14 +257,16 @@ def stage_c_command(
         str(candidates_path),
         "--output",
         str(output_path),
+        "--workers",
+        str(workers),
     ]
     if time_limit_seconds is not None:
         command.extend(["--time-limit-seconds", str(time_limit_seconds)])
     return command
 
 
-def run_stage_c(candidates_path: Path, output_path: Path, time_limit_seconds: float | None) -> None:
-    run_command(stage_c_command(candidates_path, output_path, time_limit_seconds), STAGE_C_DIR)
+def run_stage_c(candidates_path: Path, output_path: Path, time_limit_seconds: float | None, workers: int) -> None:
+    run_command(stage_c_command(candidates_path, output_path, time_limit_seconds, workers), STAGE_C_DIR)
 
 
 def run_stage_d(contexts_path: Path | None = None) -> None:
@@ -322,6 +336,7 @@ def run_stage_c_with_streaming_d(
     candidates_path: Path,
     output_path: Path,
     time_limit_seconds: float | None,
+    workers: int,
     stage_d_output_dir: Path,
     report_root: Path,
     report_run_name: str,
@@ -332,7 +347,7 @@ def run_stage_c_with_streaming_d(
     output_path.write_text("", encoding="utf-8")
     with tempfile.TemporaryDirectory(prefix="magus-stage-c-") as temp_dir:
         done_file = Path(temp_dir) / "stage_c.done"
-        c_command = stage_c_command(candidates_path, output_path, time_limit_seconds)
+        c_command = stage_c_command(candidates_path, output_path, time_limit_seconds, workers)
         d_command = [
             str(STAGE_D_PYTHON),
             "stream_from_C.py",
@@ -482,6 +497,12 @@ def main() -> None:
         default=None,
         help="Stage C 可选候选提交时间预算，默认不限制",
     )
+    parser_c.add_argument(
+        "--workers",
+        type=positive_int,
+        default=DEFAULT_STAGE_C_WORKERS,
+        help=f"Stage C 并发 worker 进程数，默认 {DEFAULT_STAGE_C_WORKERS}",
+    )
     parser_d = subparsers.add_parser("d", help="运行 Stage D，并在 D 完成后生成最终报告")
     parser_d.add_argument(
         "--contexts",
@@ -529,6 +550,12 @@ def main() -> None:
         type=float,
         default=None,
         help="Stage C 可选候选提交时间预算，默认不限制",
+    )
+    parser_abcd.add_argument(
+        "--c-workers",
+        type=positive_int,
+        default=DEFAULT_STAGE_C_WORKERS,
+        help=f"Stage C 并发 worker 进程数，默认 {DEFAULT_STAGE_C_WORKERS}",
     )
     parser_abcd.add_argument(
         "--report-root",
@@ -592,6 +619,7 @@ def main() -> None:
             resolve_path(args.candidates),
             resolve_path(args.output),
             args.time_limit_seconds,
+            args.workers,
         )
         return
 
@@ -637,6 +665,7 @@ def main() -> None:
             candidates_path,
             c_output,
             args.c_time_limit_seconds,
+            args.c_workers,
             stage_d_output_dir,
             report_root,
             report_run_name,

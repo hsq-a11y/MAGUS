@@ -1,6 +1,7 @@
 # Python/runtime caches
 __pycache__/
 *.py[cod]
+.venv/
 
 # Local agent/tool state
 .agents/
@@ -20,7 +21,7 @@ a/analyzer/llvm-api-analyzer
 a/cmd/__pycache__/
 
 # Stage B generated artifacts
-b/b_output/
+b/b_output*
 b/__pycache__/
 
 c/out/
@@ -32,4 +33,3 @@ d/memberD_verifier/02_run_with_C/.stage_d_output.lock/
 d/memberD_verifier/02_run_with_C/output/*
 
 test/out/*
-

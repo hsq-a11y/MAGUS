@@ -1,4 +1,0 @@
-[2026-05-22T05:43:27Z] cwd=/home/sq_hu/MAGUS
-[2026-05-22T05:43:27Z] cmd=/usr/bin/python3 tools/gen_srcs_compile_commands.py --repo-path srcs_sanitized --output srcs_sanitized/compile_commands.cwe247.json --source-glob 'juliet-api-misuse/testcases/CWE247_Reliance_on_DNS_Lookups_in_Security_Decision/**/*.c' --source-glob 'juliet-api-misuse/testcases/CWE247_Reliance_on_DNS_Lookups_in_Security_Decision/**/*.cc' --source-glob 'juliet-api-misuse/testcases/CWE247_Reliance_on_DNS_Lookups_in_Security_Decision/**/*.cpp' --source-glob 'juliet-api-misuse/testcases/CWE247_Reliance_on_DNS_Lookups_in_Security_Decision/**/*.cxx' --include-dir ../tools/juliet_win_shim --include-dir juliet-api-misuse/testcasesupport --force
-[2026-05-22T05:43:27Z] wrote 19 compile commands to /home/sq_hu/MAGUS/srcs_sanitized/compile_commands.cwe247.json
-[2026-05-22T05:43:27Z] returncode=0

@@ -1,2 +1,0 @@
-case_key,cwe,files,basis,d_failure_codes,d_failed_routes,audit_reasons,audit_routes
-CWE-377/main_linux,CWE-377,"[""testcases/CWE377_Insecure_Temporary_File/main_linux.cpp""]","[""source_has_bad_path"",""source_has_good_path""]","[""ENV_MISSING""]","[""juliet-api-misuse/testcases/CWE377_Insecure_Temporary_File/main_linux.cpp::main""]",[],[]

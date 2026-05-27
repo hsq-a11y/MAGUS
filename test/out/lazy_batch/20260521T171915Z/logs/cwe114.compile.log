@@ -1,4 +1,0 @@
-[2026-05-21T17:19:15Z] cwd=/home/sq_hu/MAGUS
-[2026-05-21T17:19:15Z] cmd=/usr/bin/python3 tools/gen_srcs_compile_commands.py --repo-path srcs_sanitized --output srcs_sanitized/compile_commands.cwe114.json --source-glob 'juliet-api-misuse/testcases/CWE114_Process_Control/**/*.c' --source-glob 'juliet-api-misuse/testcases/CWE114_Process_Control/**/*.cc' --source-glob 'juliet-api-misuse/testcases/CWE114_Process_Control/**/*.cpp' --source-glob 'juliet-api-misuse/testcases/CWE114_Process_Control/**/*.cxx' --include-dir ../tools/juliet_win_shim --include-dir juliet-api-misuse/testcasesupport --force
-[2026-05-21T17:19:15Z] wrote 937 compile commands to /home/sq_hu/MAGUS/srcs_sanitized/compile_commands.cwe114.json
-[2026-05-21T17:19:15Z] returncode=0

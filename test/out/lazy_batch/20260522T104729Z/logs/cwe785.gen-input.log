@@ -1,6 +1,0 @@
-[2026-05-22T11:42:35Z] cwd=/home/sq_hu/MAGUS
-[2026-05-22T11:42:35Z] cmd=/usr/bin/python3 pipeline.py gen-input --repo-path srcs_sanitized --compile-commands srcs_sanitized/compile_commands.cwe785.json --output a/input/srcs.cwe785.in.jsonl --project-id cwe785 --force
-[2026-05-22T11:42:36Z] [pipeline] cwd=/home/sq_hu/MAGUS/a
-[2026-05-22T11:42:36Z] [pipeline] cmd=/usr/bin/python3 cmd/gen_input.py --repo-path /home/sq_hu/MAGUS/srcs_sanitized --output /home/sq_hu/MAGUS/a/input/srcs.cwe785.in.jsonl --project-id cwe785 --language c --framework generic --analyzer-jobs 2 --analysis-timeout 1800 --clang clang --clangxx clang++ --bc-dir bc --compile-commands /home/sq_hu/MAGUS/srcs_sanitized/compile_commands.cwe785.json --force
-[2026-05-22T11:42:36Z] wrote Stage A input to /home/sq_hu/MAGUS/a/input/srcs.cwe785.in.jsonl
-[2026-05-22T11:42:36Z] returncode=0

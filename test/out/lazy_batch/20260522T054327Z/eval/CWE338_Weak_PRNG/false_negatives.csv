@@ -1,2 +1,0 @@
-case_key,cwe,files,basis,d_failure_codes,d_failed_routes,audit_reasons,audit_routes
-CWE-338/CWE338_Weak_PRNG__w32_14,CWE-338,"[""testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_14.c""]","[""source_has_bad_path"",""source_has_good_path""]",[],[],[],[]
