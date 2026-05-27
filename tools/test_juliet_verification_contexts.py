@@ -6,6 +6,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 def load_module(name: str, path: Path):
@@ -105,6 +106,59 @@ class JulietHelperOutputTests(unittest.TestCase):
             )
         )
 
+    def test_lifecycle_flaw_after_bad_entry_counts_as_route_bound(self):
+        stdout = "Calling case0()...\n"
+        oracle_output = "MAGUS_ORACLE_FLAW profile=resource.fd_lifecycle.user_posix reason=wrong_release_api"
+
+        self.assertTrue(
+            self.runner.route_was_executed(
+                stdout,
+                Path("CWE404_Improper_Resource_Shutdown__open_fclose_72a.cpp"),
+                "bad",
+                oracle_output,
+            )
+        )
+
+    def test_lifecycle_flaw_does_not_bind_wrong_scenario(self):
+        stdout = "Calling case1()...\n"
+        oracle_output = "MAGUS_ORACLE_FLAW profile=resource.fd_lifecycle.user_posix reason=wrong_release_api"
+
+        self.assertFalse(
+            self.runner.route_was_executed(
+                stdout,
+                Path("CWE404_Improper_Resource_Shutdown__open_fclose_72a.cpp"),
+                "bad",
+                oracle_output,
+            )
+        )
+
+    def test_search_path_flaw_after_bad_entry_counts_as_route_bound(self):
+        stdout = "Calling bad()...\n"
+        oracle_output = "MAGUS_ORACLE_FLAW name=system reason=unqualified_command_search_path value=cmd.exe /c dir"
+
+        self.assertTrue(
+            self.runner.route_was_executed(
+                stdout,
+                Path("CWE426_Untrusted_Search_Path__char_system_21.c"),
+                "bad",
+                oracle_output,
+            )
+        )
+
+    def test_scenario_detection_prefers_bad_route_when_good_sink_text_is_present(self):
+        args = SimpleNamespace(
+            route="bad -> CreateFile -> _close /* GoodSink: CloseHandle */",
+            entry_symbol="CWE404_Improper_Resource_Shutdown__w32CreateFile_close_01_bad",
+        )
+
+        self.assertEqual(
+            self.runner.scenario_for(
+                args,
+                Path("CWE404_Improper_Resource_Shutdown__w32CreateFile_close_01.c"),
+            ),
+            "bad",
+        )
+
     def test_memory_profile_enables_asan_flags(self):
         self.assertIn(
             "-fsanitize=address",
@@ -125,6 +179,75 @@ class JulietHelperOutputTests(unittest.TestCase):
 
         self.assertIn("-fsanitize=undefined,signed-integer-overflow", flags)
         self.assertNotIn("-fsanitize=address", flags)
+
+    def test_cpp_iterator_profile_enables_libstdcxx_debug_mode(self):
+        flags = self.runner.sanitizer_flags_for("resource.cpp_iterator_lifecycle")
+
+        self.assertIn("-D_GLIBCXX_DEBUG", flags)
+        self.assertIn("-D_GLIBCXX_DEBUG_PEDANTIC", flags)
+
+    def test_cpp_iterator_debug_error_counts_as_route_bound(self):
+        stdout = "Calling bad()...\n"
+        stderr = "Error: attempt to dereference a singular iterator."
+
+        self.assertTrue(
+            self.runner.route_was_executed(
+                stdout,
+                Path("CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_21.cpp"),
+                "bad",
+                stderr,
+            )
+        )
+
+    def test_cpp_iterator_rejects_compiler_generated_route_without_scenario(self):
+        args = SimpleNamespace(
+            route="CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_68a.cpp::__cxx_global_var_init.2",
+            entry_symbol="__cxx_global_var_init.2",
+            oracle_profile_id="resource.cpp_iterator_lifecycle",
+        )
+
+        self.assertTrue(self.runner.route_is_compiler_generated(args))
+        self.assertFalse(self.runner.route_has_scenario_token(args))
+        self.assertTrue(self.runner.route_requires_explicit_scenario(args))
+
+    def test_cpp_iterator_rejects_implicit_cpp_destructor_route_without_scenario(self):
+        args = SimpleNamespace(
+            route=(
+                "CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_67a.cpp::"
+                "_ZN69CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_6711_structTypeD2Ev"
+            ),
+            entry_symbol="_ZN69CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_6711_structTypeD2Ev",
+            oracle_profile_id="resource.cpp_iterator_lifecycle",
+        )
+
+        self.assertTrue(self.runner.route_is_compiler_generated(args))
+        self.assertFalse(self.runner.route_has_scenario_token(args))
+
+    def test_cpp_iterator_accepts_case0_route_even_when_mangled(self):
+        args = SimpleNamespace(
+            route=(
+                "CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_62b.cpp::"
+                "_ZN69CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_6211case0SourceEv"
+            ),
+            entry_symbol="_ZN69CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_6211case0SourceEv",
+            oracle_profile_id="resource.cpp_iterator_lifecycle",
+        )
+
+        self.assertFalse(self.runner.route_is_compiler_generated(args))
+        self.assertTrue(self.runner.route_has_scenario_token(args))
+
+    def test_cpp_juliet_compat_flags_allow_windows_pointer_truncation_cases(self):
+        flags = self.runner.juliet_compat_compile_flags_for(Path("CWE404_example.cpp"))
+
+        self.assertIn("-fms-extensions", flags)
+        self.assertIn("-Wno-pointer-to-int-cast", flags)
+        self.assertEqual(self.runner.juliet_compat_compile_flags_for(Path("CWE404_example.c")), [])
+
+    def test_process_shim_declares_wsystem_for_wchar_t_system_cases(self):
+        process_header = Path(__file__).resolve().parents[1] / "tools" / "juliet_win_shim" / "process.h"
+        text = process_header.read_text(encoding="utf-8")
+
+        self.assertIn("int _wsystem(const wchar_t *command);", text)
 
     def test_payload_candidates_use_runtime_inputs_json_once_each(self):
         old_value = self.runner.os.environ.get("MAGUS_D_RUNTIME_INPUTS_JSON")

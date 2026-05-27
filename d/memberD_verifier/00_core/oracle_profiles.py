@@ -173,6 +173,15 @@ LINUX_KERNEL_PROFILE_ID = "resource.lifecycle.linux_kernel"
 LINUX_KERNEL_ACQUIRE_APIS: Tuple[str, ...] = ("filp_open", "get_file", "kmalloc", "kzalloc", "kobject_get")
 LINUX_KERNEL_RELEASE_APIS: Tuple[str, ...] = ("filp_close", "fput", "kfree", "kobject_put")
 
+CPP_ITERATOR_PROFILE_ID = "resource.cpp_iterator_lifecycle"
+CPP_ITERATOR_DEBUG_PATTERNS: Tuple[str, ...] = (
+    "attempt to dereference a singular iterator",
+    "attempt to increment a singular iterator",
+    "attempt to compare a singular iterator",
+    "singular iterator",
+    "safe_iterator",
+)
+
 
 def lifecycle_profile_api_markers(
     profile_id: str,
@@ -366,6 +375,33 @@ PROFILES: Tuple[OracleProfile, ...] = (
         },
     ),
     OracleProfile(
+        profile_id=CPP_ITERATOR_PROFILE_ID,
+        description="C++ container iterator is used after the container operation invalidates it.",
+        cwe_tokens=("cwe-672", "cwe672"),
+        keywords=(
+            "iterator",
+            "invalidated iterator",
+            "singular iterator",
+            "std::list",
+            "std::vector",
+            "clear",
+            "erase",
+            "operation on resource after expiration",
+        ),
+        api_markers={},
+        generic_markers=CPP_ITERATOR_DEBUG_PATTERNS,
+        accepted_evidence=(
+            "route-bound libstdc++ debug runtime observed invalid iterator use after container invalidation",
+        ),
+        semantic_model={
+            "kind": "cpp_iterator_lifecycle",
+            "family": "cpp_container_iterator",
+            "resource_kind": "container_iterator",
+            "execution_environment": "libstdcxx_debug",
+            "bug_class": "iterator_invalidated_after_container_mutation",
+        },
+    ),
+    OracleProfile(
         profile_id="ldap.injection",
         description="Attacker-controlled LDAP filter reaches search API.",
         cwe_tokens=("cwe-90", "cwe90"),
@@ -498,7 +534,7 @@ PROFILES: Tuple[OracleProfile, ...] = (
     OracleProfile(
         profile_id=POSIX_FD_PROFILE_ID,
         description="User-space file descriptor lifecycle is invalid, duplicated, transferred, or missing release.",
-        cwe_tokens=("cwe-404", "cwe404", "cwe-672", "cwe672", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
+        cwe_tokens=("cwe-404", "cwe404", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
         keywords=(
             "file descriptor",
             "fd leak",
@@ -544,7 +580,7 @@ PROFILES: Tuple[OracleProfile, ...] = (
     OracleProfile(
         profile_id=STDIO_PROFILE_ID,
         description="C stdio stream lifecycle is invalid, transferred, or missing the matching close operation.",
-        cwe_tokens=("cwe-404", "cwe404", "cwe-672", "cwe672", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
+        cwe_tokens=("cwe-404", "cwe404", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
         keywords=(
             "stdio",
             "file stream",
@@ -585,7 +621,7 @@ PROFILES: Tuple[OracleProfile, ...] = (
     OracleProfile(
         profile_id=WIN32_HANDLE_PROFILE_ID,
         description="Win32 HANDLE lifecycle is invalid, duplicated, or missing the matching CloseHandle operation.",
-        cwe_tokens=("cwe-404", "cwe404", "cwe-672", "cwe672", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
+        cwe_tokens=("cwe-404", "cwe404", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
         keywords=(
             "win32 handle",
             "handle leak",
@@ -613,7 +649,10 @@ PROFILES: Tuple[OracleProfile, ...] = (
                 "CreateFileW": ("MAGUS_ORACLE_FLAW name=CreateFileW reason=missing_closehandle",),
             },
         ),
-        generic_markers=lifecycle_generic_markers(WIN32_HANDLE_PROFILE_ID),
+        generic_markers=(
+            *lifecycle_generic_markers(WIN32_HANDLE_PROFILE_ID),
+            "MAGUS_ORACLE_FLAW name=CloseHandle reason=duplicate_close",
+        ),
         accepted_evidence=(
             "route-bound Win32 HANDLE lifecycle oracle observed acquire/release/duplicate state on the same HANDLE",
         ),
@@ -641,7 +680,7 @@ PROFILES: Tuple[OracleProfile, ...] = (
     OracleProfile(
         profile_id=LINUX_KERNEL_PROFILE_ID,
         description="Linux kernel resource lifecycle is invalid, leaked, or released with the wrong kernel API family.",
-        cwe_tokens=("cwe-404", "cwe404", "cwe-672", "cwe672", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
+        cwe_tokens=("cwe-404", "cwe404", "cwe-675", "cwe675", "cwe-773", "cwe773", "cwe-775", "cwe775"),
         keywords=(
             "linux kernel",
             "kernel resource",
@@ -745,6 +784,21 @@ PROFILES: Tuple[OracleProfile, ...] = (
                 "MAGUS_ORACLE_FLAW name=AddDllDirectory reason=tainted_dll_search_directory",
                 "MAGUS_ORACLE_SINK name=AddDllDirectory tainted=1",
             ),
+            "system": (
+                "MAGUS_ORACLE_FLAW name=system reason=unqualified_command_search_path",
+            ),
+            "_wsystem": (
+                "MAGUS_ORACLE_FLAW name=_wsystem reason=unqualified_command_search_path",
+            ),
+            "popen": (
+                "MAGUS_ORACLE_FLAW name=popen reason=unqualified_command_search_path",
+            ),
+            "_popen": (
+                "MAGUS_ORACLE_FLAW name=_popen reason=unqualified_command_search_path",
+            ),
+            "_wpopen": (
+                "MAGUS_ORACLE_FLAW name=_wpopen reason=unqualified_command_search_path",
+            ),
         },
         generic_markers=(
             "MAGUS_ORACLE_FLAW name=SearchPathA reason=tainted_search_path_api",
@@ -757,6 +811,11 @@ PROFILES: Tuple[OracleProfile, ...] = (
             "MAGUS_ORACLE_FLAW name=SetDllDirectoryA reason=tainted_dll_search_directory",
             "MAGUS_ORACLE_FLAW name=SetDllDirectoryW reason=tainted_dll_search_directory",
             "MAGUS_ORACLE_FLAW name=AddDllDirectory reason=tainted_dll_search_directory",
+            "MAGUS_ORACLE_FLAW name=system reason=unqualified_command_search_path",
+            "MAGUS_ORACLE_FLAW name=_wsystem reason=unqualified_command_search_path",
+            "MAGUS_ORACLE_FLAW name=popen reason=unqualified_command_search_path",
+            "MAGUS_ORACLE_FLAW name=_popen reason=unqualified_command_search_path",
+            "MAGUS_ORACLE_FLAW name=_wpopen reason=unqualified_command_search_path",
         ),
         accepted_evidence=(
             "route-bound search path API or PATH update consumed attacker-controlled path text",
@@ -766,6 +825,49 @@ PROFILES: Tuple[OracleProfile, ...] = (
 
 
 API_NAMES = tuple(sorted({api for profile in PROFILES for api in profile.api_names}, key=len, reverse=True))
+PROFILE_BY_ID = {profile.profile_id: profile for profile in PROFILES}
+
+JULIET_RESOURCE_SOURCE_RES: Tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"CWE404_Improper_Resource_Shutdown__([A-Za-z0-9]+)_([A-Za-z0-9]+)_",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"CWE675_Duplicate_Operations_on_Resource__([A-Za-z0-9]+)_",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"CWE775_Missing_Release_of_File_Descriptor_or_Handle__([A-Za-z0-9]+)_",
+        re.IGNORECASE,
+    ),
+)
+
+JULIET_RESOURCE_SOURCE_PROFILES = {
+    "open": POSIX_FD_PROFILE_ID,
+    "fopen": STDIO_PROFILE_ID,
+    "freopen": STDIO_PROFILE_ID,
+    "w32createfile": WIN32_HANDLE_PROFILE_ID,
+}
+
+RESOURCE_LIFECYCLE_API_NAMES = frozenset(
+    (*POSIX_FD_ACQUIRE_APIS, *POSIX_FD_RELEASE_APIS, *POSIX_FD_TRANSFER_APIS, *POSIX_FD_DUP_APIS)
+    + (*STDIO_ACQUIRE_APIS, *STDIO_RELEASE_APIS)
+    + (*WIN32_HANDLE_ACQUIRE_APIS, *WIN32_HANDLE_RELEASE_APIS, *WIN32_HANDLE_DUP_APIS)
+    + (*LINUX_KERNEL_ACQUIRE_APIS, *LINUX_KERNEL_RELEASE_APIS)
+)
+
+CWE672_CONTAINER_TERMS = (
+    "std::list",
+    "std::vector",
+    "list int",
+    "vector int",
+    "iterator",
+    "invalidated iterator",
+    "after clear",
+    "clear",
+    "erase",
+    "push_back",
+)
 
 
 def _token_words(value: str) -> List[str]:
@@ -802,9 +904,50 @@ def _score_profile(profile: OracleProfile, haystack_lower: str, api_names: Itera
     return score
 
 
+def _has_cwe_token(haystack_lower: str, cwe_number: str) -> bool:
+    return _contains_token(haystack_lower, f"cwe-{cwe_number}") or _contains_token(haystack_lower, f"cwe{cwe_number}")
+
+
+def _is_cwe672_container_lifetime(haystack_lower: str, api_names: List[str]) -> bool:
+    if not _has_cwe_token(haystack_lower, "672"):
+        return False
+    if any(api in RESOURCE_LIFECYCLE_API_NAMES for api in api_names):
+        return False
+    return any(term in haystack_lower or _contains_token(haystack_lower, term) for term in CWE672_CONTAINER_TERMS)
+
+
+def _select_juliet_resource_profile(haystack: str, api_names: List[str]) -> Tuple[OracleProfile | None, List[str], int]:
+    source_api = ""
+    for pattern in JULIET_RESOURCE_SOURCE_RES:
+        match = pattern.search(haystack)
+        if match:
+            source_api = match.group(1).lower()
+            break
+    if not source_api:
+        return None, api_names, 0
+    profile_id = JULIET_RESOURCE_SOURCE_PROFILES.get(source_api)
+    if not profile_id:
+        return None, api_names, 0
+    profile = PROFILE_BY_ID.get(profile_id)
+    if profile is None:
+        return None, api_names, 0
+    matched = [api for api in api_names if api in profile.api_markers]
+    return profile, matched, 100
+
+
 def select_profile(hypothesis: Dict[str, Any]) -> Tuple[OracleProfile | None, List[str], int]:
-    haystack_lower = hypothesis_text(hypothesis).lower()
+    haystack = hypothesis_text(hypothesis)
+    haystack_lower = haystack.lower()
     api_names = infer_api_names(hypothesis)
+    if _is_cwe672_container_lifetime(haystack_lower, api_names):
+        profile = PROFILE_BY_ID.get(CPP_ITERATOR_PROFILE_ID)
+        if profile is not None:
+            return profile, [], 100
+
+    juliet_profile, juliet_matched, juliet_score = _select_juliet_resource_profile(haystack, api_names)
+    if juliet_profile is not None:
+        return juliet_profile, juliet_matched, juliet_score
+
     best: Tuple[OracleProfile | None, int] = (None, 0)
     for profile in PROFILES:
         score = _score_profile(profile, haystack_lower, api_names)

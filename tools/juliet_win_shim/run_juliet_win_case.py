@@ -36,6 +36,17 @@ MEMORY_OOB_PROFILE_ID = "memory.out_of_bounds_write"
 MEMORY_OOB_READ_PROFILE_ID = "memory.out_of_bounds_read"
 MEMORY_UAF_PROFILE_ID = "memory.use_after_free"
 INTEGER_OVERFLOW_PROFILE_ID = "integer.overflow"
+CPP_ITERATOR_PROFILE_ID = "resource.cpp_iterator_lifecycle"
+LIFECYCLE_ROUTE_EVIDENCE_PATTERNS = (
+    "MAGUS_ORACLE_FLAW profile=resource.",
+    "MAGUS_JULIET_FLAW profile=resource.",
+)
+PATH_ROUTE_EVIDENCE_PATTERNS = (
+    "reason=tainted_search_path_api",
+    "reason=tainted_search_path_environment",
+    "reason=tainted_dll_search_directory",
+    "reason=unqualified_command_search_path",
+)
 LIFECYCLE_CAPABILITY_ENV = {
     POSIX_FD_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_FD_LEAKS",
     STDIO_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_STREAM_LEAKS",
@@ -53,6 +64,19 @@ SANITIZER_EVIDENCE_PATTERNS = (
     "stack-use-after-scope",
     "runtime error: signed integer overflow",
     "runtime error: unsigned integer overflow",
+)
+CPP_ITERATOR_EVIDENCE_PATTERNS = (
+    "attempt to dereference a singular iterator",
+    "attempt to increment a singular iterator",
+    "attempt to compare a singular iterator",
+    "singular iterator",
+    "safe_iterator",
+)
+COMPILER_GENERATED_ROUTE_PATTERNS = (
+    "__cxx_global_var_init",
+    "_global__sub_i_",
+    "_global__sub_d_",
+    "__static_initialization_and_destruction_0",
 )
 SOURCE_SUFFIXES = (".c", ".cpp", ".cc", ".cxx")
 SCENARIO_LABELS = {"bad": "case0", "good": "case1"}
@@ -250,16 +274,32 @@ def main_source(companions: list[Path], source: Path) -> Path:
 
 def scenario_for(args: argparse.Namespace, source: Path) -> str:
     text = desanitize_text(f"{args.route} {args.entry_symbol}").lower()
-    if "good" in text:
-        return "good"
     if "bad" in text:
         return "bad"
+    if "good" in text:
+        return "good"
     text = desanitize_text(source.name).lower()
-    if "good" in text:
-        return "good"
     if "bad" in text:
         return "bad"
+    if "good" in text:
+        return "good"
     return "bad"
+
+
+def route_has_scenario_token(args: argparse.Namespace) -> bool:
+    text = desanitize_text(f"{args.route} {args.entry_symbol}").lower()
+    return any(token in text for token in ("bad", "good", "case0", "case1"))
+
+
+def route_is_compiler_generated(args: argparse.Namespace) -> bool:
+    text = desanitize_text(f"{args.route} {args.entry_symbol}").lower()
+    if any(pattern in text for pattern in COMPILER_GENERATED_ROUTE_PATTERNS):
+        return True
+    return bool(re.search(r"(?:c1|c2|d1|d2)ev(?:\b|_)", text))
+
+
+def route_requires_explicit_scenario(args: argparse.Namespace) -> bool:
+    return args.oracle_profile_id == CPP_ITERATOR_PROFILE_ID and route_is_compiler_generated(args)
 
 
 def omit_macro_for(source: Path, scenario: str) -> str:
@@ -272,6 +312,11 @@ def scenario_label(source: Path, scenario: str) -> str:
     if is_sanitized_source(source):
         return SCENARIO_LABELS[scenario]
     return scenario
+
+
+def scenario_labels(source: Path, scenario: str) -> tuple[str, ...]:
+    labels = [scenario_label(source, scenario), SCENARIO_LABELS[scenario], scenario]
+    return tuple(dict.fromkeys(labels))
 
 
 def link_compiler(companions: list[Path], args: argparse.Namespace) -> str:
@@ -352,11 +397,30 @@ def sanitizer_flags_for(profile_id: str) -> list[str]:
         return ["-fsanitize=address", "-fno-omit-frame-pointer", "-g"]
     if profile_id == INTEGER_OVERFLOW_PROFILE_ID:
         return ["-fsanitize=undefined,signed-integer-overflow", "-fno-omit-frame-pointer", "-g"]
+    if profile_id == CPP_ITERATOR_PROFILE_ID:
+        return ["-D_GLIBCXX_DEBUG", "-D_GLIBCXX_DEBUG_PEDANTIC", "-g"]
     return []
 
 
+def juliet_compat_compile_flags_for(path: Path) -> list[str]:
+    if path.suffix.lower() not in {".cpp", ".cc", ".cxx"}:
+        return []
+    return [
+        "-fms-extensions",
+        "-Wno-pointer-to-int-cast",
+        "-Wno-int-to-pointer-cast",
+        "-Wno-void-pointer-to-int-cast",
+    ]
+
+
 def has_sanitizer_evidence(output: str) -> bool:
-    return any(pattern in output for pattern in SANITIZER_EVIDENCE_PATTERNS)
+    return any(pattern in output for pattern in (*SANITIZER_EVIDENCE_PATTERNS, *CPP_ITERATOR_EVIDENCE_PATTERNS))
+
+
+def has_route_bound_oracle_evidence(output: str) -> bool:
+    if has_sanitizer_evidence(output):
+        return True
+    return any(pattern in output for pattern in (*LIFECYCLE_ROUTE_EVIDENCE_PATTERNS, *PATH_ROUTE_EVIDENCE_PATTERNS))
 
 
 def compile_unit(command: list[str], tmp_path: Path) -> bool:
@@ -388,6 +452,7 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
             unit_compiler,
             "-c",
             *sanitizer_flags,
+            *juliet_compat_compile_flags_for(unit),
             "-D_WIN32",
             "-DINCLUDEMAIN" if unit == entry_unit else "-DMAGUS_COMPANION_UNIT",
             omit_macro,
@@ -437,14 +502,14 @@ def compile_case(args: argparse.Namespace, source: Path, tmp_path: Path) -> tupl
 
 
 def route_was_executed(stdout: str, source: Path, scenario: str, oracle_output: str = "") -> bool:
-    label = scenario_label(source, scenario)
-    other_label = scenario_label(source, "good" if scenario == "bad" else "bad")
-    expected_call = f"Calling {label}()..."
-    expected_finish = f"Finished {label}()"
-    unexpected_call = f"Calling {other_label}()..."
-    if expected_call in stdout and expected_finish in stdout and unexpected_call not in stdout:
+    expected_labels = scenario_labels(source, scenario)
+    unexpected_labels = scenario_labels(source, "good" if scenario == "bad" else "bad")
+    expected_call_seen = any(f"Calling {label}()..." in stdout for label in expected_labels)
+    expected_finish_seen = any(f"Finished {label}()" in stdout for label in expected_labels)
+    unexpected_call_seen = any(f"Calling {label}()..." in stdout for label in unexpected_labels)
+    if expected_call_seen and expected_finish_seen and not unexpected_call_seen:
         return True
-    return expected_call in stdout and unexpected_call not in stdout and has_sanitizer_evidence(oracle_output)
+    return expected_call_seen and not unexpected_call_seen and has_route_bound_oracle_evidence(oracle_output)
 
 
 def oracle_confirmed(stdout: str, confirm_patterns: list[str]) -> tuple[bool, list[str]]:
@@ -487,6 +552,13 @@ def main() -> int:
     source = resolve_source(args.source_file)
     require_sanitization_map_for(source)
     scenario = scenario_for(args, source)
+    if route_requires_explicit_scenario(args) and not route_has_scenario_token(args):
+        print(
+            f"{NOT_ROUTE_BOUND_MARKER} expected_scenario={scenario} "
+            f"entry_symbol={args.entry_symbol or '<unknown>'} source_file={source} "
+            f"main_source={source} reason=compiler_generated_route"
+        )
+        return 1
 
     for compiler in {args.cc, args.cxx}:
         if not Path(compiler).exists():

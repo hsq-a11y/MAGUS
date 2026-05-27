@@ -5,8 +5,10 @@
 #include "shlwapi.h"
 #include "rpcdce.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,6 +155,34 @@ static MAGUS_STREAM_STATE *find_stream_state(FILE *stream)
     return NULL;
 }
 
+static MAGUS_STREAM_STATE *find_stream_state_from_int(int value)
+{
+    size_t i;
+    for (i = 0; i < stream_state_count; i++)
+    {
+        if ((int)(intptr_t)stream_states[i].stream == value)
+        {
+            return &stream_states[i];
+        }
+    }
+    return NULL;
+}
+
+static MAGUS_FD_STATE *find_fd_state_from_pointer(const void *value)
+{
+    uintptr_t raw = (uintptr_t)value;
+    if (raw > (uintptr_t)INT_MAX)
+    {
+        return NULL;
+    }
+    return find_fd_state((int)raw);
+}
+
+static MAGUS_HANDLE_STATE *find_handle_state_from_pointer(const void *value)
+{
+    return find_handle_state((HANDLE)(intptr_t)value);
+}
+
 static void register_key(HCRYPTKEY key, ALG_ID alg)
 {
     if (key == NULL || key_state_count >= sizeof(key_states) / sizeof(key_states[0]))
@@ -268,6 +298,8 @@ static void flaw_marker_w(const char *name, const wchar_t *value, const char *re
 static int tracked_close_fd(const char *name, int fd)
 {
     MAGUS_FD_STATE *state;
+    MAGUS_HANDLE_STATE *handle_state;
+    MAGUS_STREAM_STATE *stream_state;
     if (fd < 0)
     {
         lifecycle_flaw_marker("resource.fd_lifecycle.user_posix", name, "", "failed_acquire_used");
@@ -283,12 +315,29 @@ static int tracked_close_fd(const char *name, int fd)
         }
         state->closed = 1;
     }
+    else
+    {
+        handle_state = find_handle_state((HANDLE)(intptr_t)fd);
+        if (handle_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.handle_lifecycle.win32", name, "", "wrong_release_api");
+            return -1;
+        }
+        stream_state = find_stream_state_from_int(fd);
+        if (stream_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.stream_lifecycle.c_stdio", name, "", "wrong_release_api");
+            return -1;
+        }
+    }
     return close(fd);
 }
 
 static int tracked_close_stream(const char *name, FILE *stream)
 {
     MAGUS_STREAM_STATE *state;
+    MAGUS_FD_STATE *fd_state;
+    MAGUS_HANDLE_STATE *handle_state;
     int fd;
     if (stream == NULL)
     {
@@ -304,6 +353,23 @@ static int tracked_close_stream(const char *name, FILE *stream)
             return EOF;
         }
         state->closed = 1;
+    }
+    else
+    {
+        fd_state = find_fd_state_from_pointer(stream);
+        if (fd_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.fd_lifecycle.user_posix", name, "", "wrong_release_api");
+            return EOF;
+        }
+        handle_state = find_handle_state_from_pointer(stream);
+        if (handle_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.handle_lifecycle.win32", name, "", "wrong_release_api");
+            return EOF;
+        }
+        lifecycle_flaw_marker("resource.stream_lifecycle.c_stdio", name, "", "wrong_release_api");
+        return EOF;
     }
     fflush(stream);
     fd = fileno(stream);
@@ -428,6 +494,66 @@ static void search_path_api_marker(const char *name, const char *path, const cha
     {
         flaw_marker(name, marker_value, "tainted_search_path_api");
     }
+}
+
+static int is_blank_command(const char *command)
+{
+    const unsigned char *cursor = (const unsigned char *)command;
+    if (cursor == NULL)
+    {
+        return 1;
+    }
+    while (*cursor != '\0' && isspace(*cursor))
+    {
+        cursor++;
+    }
+    return *cursor == '\0';
+}
+
+static int is_absolute_command_path(const char *command)
+{
+    const unsigned char *cursor = (const unsigned char *)command;
+    if (cursor == NULL)
+    {
+        return 0;
+    }
+    while (*cursor != '\0' && isspace(*cursor))
+    {
+        cursor++;
+    }
+    if (*cursor == '\'' || *cursor == '"')
+    {
+        cursor++;
+    }
+    if (*cursor == '/')
+    {
+        return 1;
+    }
+    if (cursor[0] == '\\' && cursor[1] == '\\')
+    {
+        return 1;
+    }
+    if (isalpha(cursor[0]) && cursor[1] == ':' && (cursor[2] == '\\' || cursor[2] == '/'))
+    {
+        return 1;
+    }
+    return 0;
+}
+
+static void command_search_path_marker(const char *name, const char *command)
+{
+    sink_marker(name, command);
+    if (!is_blank_command(command) && !is_absolute_command_path(command))
+    {
+        flaw_marker(name, command, "unqualified_command_search_path");
+    }
+}
+
+static void command_search_path_marker_w(const char *name, const wchar_t *command)
+{
+    char buffer[512];
+    wide_to_narrow(command, buffer, sizeof(buffer));
+    command_search_path_marker(name, buffer);
 }
 
 static int set_environment_assignment(const char *envstring)
@@ -1009,6 +1135,8 @@ DWORD WINAPI WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 BOOL WINAPI CloseHandle(HANDLE hObject)
 {
     MAGUS_HANDLE_STATE *state;
+    MAGUS_FD_STATE *fd_state;
+    MAGUS_STREAM_STATE *stream_state;
     if (hObject == NULL || hObject == INVALID_HANDLE_VALUE)
     {
         flaw_marker("CloseHandle", "", "invalid_or_failed_handle_used");
@@ -1026,6 +1154,23 @@ BOOL WINAPI CloseHandle(HANDLE hObject)
     }
     else
     {
+        intptr_t raw_handle_value = (intptr_t)hObject;
+        fd_state = NULL;
+        if (raw_handle_value >= 0 && raw_handle_value <= INT_MAX)
+        {
+            fd_state = find_fd_state((int)raw_handle_value);
+        }
+        if (fd_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.fd_lifecycle.user_posix", "CloseHandle", "", "wrong_release_api");
+            return FALSE;
+        }
+        stream_state = find_stream_state((FILE *)(uintptr_t)hObject);
+        if (stream_state != NULL)
+        {
+            lifecycle_flaw_marker("resource.stream_lifecycle.c_stdio", "CloseHandle", "", "wrong_release_api");
+            return FALSE;
+        }
         flaw_marker("CloseHandle", "", "unrecognized_handle_or_wrong_close_api");
         return FALSE;
     }
@@ -1118,7 +1263,7 @@ HANDLE WINAPI CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitia
     {
         last_error_value = STATUS_NO_MEMORY;
         flaw_marker("CreateMutexA", lpName, "forced_null_return_for_return_value_check");
-        return NULL;
+        return (HANDLE)0;
     }
     return fake_handle();
 }
@@ -1132,7 +1277,7 @@ HANDLE WINAPI CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitia
     {
         last_error_value = STATUS_NO_MEMORY;
         flaw_marker_w("CreateMutexW", lpName, "forced_null_return_for_return_value_check");
-        return NULL;
+        return (HANDLE)0;
     }
     return fake_handle();
 }
@@ -2064,11 +2209,11 @@ static int fopen_flags_from_mode(const char *mode)
     return read_write ? O_RDWR : O_RDONLY;
 }
 
-FILE *fopen(const char *path, const char *mode)
+static FILE *tracked_open_stream(const char *name, const char *path, const char *mode)
 {
     int fd;
     FILE *stream;
-    sink_marker("fopen", path);
+    sink_marker(name, path);
     fd = open(path, fopen_flags_from_mode(mode), 0666);
     if (fd < 0)
     {
@@ -2080,8 +2225,19 @@ FILE *fopen(const char *path, const char *mode)
         close(fd);
         return NULL;
     }
-    register_stream(stream, "fopen");
+    register_stream(stream, name);
     return stream;
+}
+
+FILE *fopen(const char *path, const char *mode)
+{
+    return tracked_open_stream("fopen", path, mode);
+}
+
+FILE *freopen(const char *path, const char *mode, FILE *stream)
+{
+    (void)stream;
+    return tracked_open_stream("freopen", path, mode);
 }
 
 int fclose(FILE *stream)
@@ -2118,29 +2274,34 @@ int vswprintf(wchar_t *str, size_t size, const wchar_t *format, va_list ap)
 
 int system(const char *command)
 {
-    sink_marker("system", command);
-    return 0;
+    command_search_path_marker("system", command);
+    return 1;
 }
 
 int _wsystem(const wchar_t *command)
 {
-    sink_marker_w("_wsystem", command);
-    return 0;
+    command_search_path_marker_w("_wsystem", command);
+    return 1;
 }
 
-FILE *popen(const char *command, const char *type)
+static FILE *open_command_pipe(const char *name)
 {
     FILE *file;
-    sink_marker("popen", command);
     file = tmpfile();
     if (file != NULL)
     {
         fputs(payload_value(), file);
         rewind(file);
-        register_stream(file, "popen");
+        register_stream(file, name);
     }
-    (void)type;
     return file;
+}
+
+FILE *popen(const char *command, const char *type)
+{
+    command_search_path_marker("popen", command);
+    (void)type;
+    return open_command_pipe("popen");
 }
 
 int pclose(FILE *stream)
@@ -2150,15 +2311,16 @@ int pclose(FILE *stream)
 
 FILE *_popen(const char *command, const char *type)
 {
-    return popen(command, type);
+    command_search_path_marker("_popen", command);
+    (void)type;
+    return open_command_pipe("_popen");
 }
 
 FILE *_wpopen(const wchar_t *command, const wchar_t *type)
 {
-    char narrow[512];
     (void)type;
-    wide_to_narrow(command, narrow, sizeof(narrow));
-    return popen(narrow, "r");
+    command_search_path_marker_w("_wpopen", command);
+    return open_command_pipe("_wpopen");
 }
 
 int _pclose(FILE *stream)

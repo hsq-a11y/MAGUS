@@ -184,6 +184,42 @@ class OracleProfileSelectionTests(unittest.TestCase):
             profile["confirm_patterns"],
         )
 
+    def test_selects_cwe426_system_as_untrusted_search_path(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "CWE426_Untrusted_Search_Path__char_system_21_bad -> system",
+                "claim": "CWE-426 untrusted search path through an unqualified command name",
+                "cwe_candidates": ["CWE-426"],
+                "evidence_slice": 'strcpy(data, "cmd.exe /c dir"); system(data);',
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "path.untrusted_search_path")
+        self.assertTrue(profile["supported"])
+        self.assertIn("system", profile["matched_apis"])
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW name=system reason=unqualified_command_search_path",
+            profile["confirm_patterns"],
+        )
+
+    def test_selects_cwe426_wpopen_as_untrusted_search_path(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "route": "CWE426_Untrusted_Search_Path__wchar_t_popen_21_bad -> _wpopen",
+                "claim": "CWE-426 untrusted search path through a wide popen command",
+                "cwe_candidates": ["CWE-426"],
+                "evidence_slice": 'wcscpy(data, L"ls -la"); _wpopen(data, L"wb");',
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "path.untrusted_search_path")
+        self.assertTrue(profile["supported"])
+        self.assertIn("_wpopen", profile["matched_apis"])
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW name=_wpopen reason=unqualified_command_search_path",
+            profile["confirm_patterns"],
+        )
+
     def test_search_path_profile_has_generic_runtime_markers(self):
         profile = oracle_profiles.build_oracle_profile(
             {
@@ -394,6 +430,171 @@ class OracleProfileSelectionTests(unittest.TestCase):
             "MAGUS_ORACLE_FLAW name=CreateFileW reason=missing_closehandle",
             profile["confirm_patterns"],
         )
+
+    def test_win32_handle_profile_accepts_closehandle_duplicate_runtime_marker(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "file": (
+                    "juliet-api-misuse/testcases/CWE675_Duplicate_Operations_on_Resource/"
+                    "CWE675_Duplicate_Operations_on_Resource__w32CreateFile_84a.cpp"
+                ),
+                "route": "CWE675_Duplicate_Operations_on_Resource__w32CreateFile_84::case0",
+                "claim": "CWE-675 duplicate CloseHandle on a CreateFile handle",
+                "cwe_candidates": ["CWE-675"],
+                "evidence_slice": "case0 object action closes the same HANDLE twice",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "resource.handle_lifecycle.win32")
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW name=CloseHandle reason=duplicate_close",
+            profile["confirm_patterns"],
+        )
+
+    def test_selects_juliet_cwe404_profile_by_acquired_resource_family(self):
+        cases = [
+            (
+                "juliet-api-misuse/testcases/CWE404_Improper_Resource_Shutdown/"
+                "CWE404_Improper_Resource_Shutdown__fopen_w32CloseHandle_01.c",
+                "fopen -> CloseHandle",
+                "resource.stream_lifecycle.c_stdio",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE404_Improper_Resource_Shutdown/"
+                "CWE404_Improper_Resource_Shutdown__freopen_w32CloseHandle_01.c",
+                "freopen -> CloseHandle",
+                "resource.stream_lifecycle.c_stdio",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE404_Improper_Resource_Shutdown/"
+                "CWE404_Improper_Resource_Shutdown__open_fclose_01.c",
+                "open -> fclose",
+                "resource.fd_lifecycle.user_posix",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE404_Improper_Resource_Shutdown/"
+                "CWE404_Improper_Resource_Shutdown__w32CreateFile_fclose_01.c",
+                "CreateFile -> fclose",
+                "resource.handle_lifecycle.win32",
+            ),
+        ]
+
+        for file_name, route, expected_profile_id in cases:
+            with self.subTest(file_name=file_name):
+                profile = oracle_profiles.build_oracle_profile(
+                    {
+                        "file": file_name,
+                        "route": route,
+                        "cwe_candidates": ["CWE-404"],
+                        "claim": "Juliet improper resource shutdown route closes with the wrong API family",
+                    }
+                )
+
+                self.assertEqual(profile["profile_id"], expected_profile_id)
+                self.assertTrue(profile["supported"])
+                self.assertIn(
+                    f"MAGUS_ORACLE_FLAW profile={expected_profile_id} reason=wrong_release_api",
+                    profile["confirm_patterns"],
+                )
+
+    def test_selects_juliet_cwe675_profile_by_acquired_resource_family(self):
+        cases = [
+            (
+                "juliet-api-misuse/testcases/CWE675_Duplicate_Operations_on_Resource/"
+                "CWE675_Duplicate_Operations_on_Resource__freopen_21.c",
+                "freopen -> fclose -> fclose",
+                "resource.stream_lifecycle.c_stdio",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE675_Duplicate_Operations_on_Resource/"
+                "CWE675_Duplicate_Operations_on_Resource__open_21.c",
+                "open -> close -> close",
+                "resource.fd_lifecycle.user_posix",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE675_Duplicate_Operations_on_Resource/"
+                "CWE675_Duplicate_Operations_on_Resource__w32CreateFile_21.c",
+                "CreateFile -> CloseHandle -> CloseHandle",
+                "resource.handle_lifecycle.win32",
+            ),
+        ]
+
+        for file_name, route, expected_profile_id in cases:
+            with self.subTest(file_name=file_name):
+                profile = oracle_profiles.build_oracle_profile(
+                    {
+                        "file": file_name,
+                        "route": route,
+                        "cwe_candidates": ["CWE-675"],
+                        "claim": "Juliet duplicate operation route releases the same resource twice",
+                    }
+                )
+
+                self.assertEqual(profile["profile_id"], expected_profile_id)
+                self.assertTrue(profile["supported"])
+                self.assertIn(
+                    f"MAGUS_ORACLE_FLAW profile={expected_profile_id} reason=duplicate_release",
+                    profile["confirm_patterns"],
+                )
+
+    def test_selects_juliet_cwe775_profile_by_acquired_resource_family(self):
+        cases = [
+            (
+                "juliet-api-misuse/testcases/CWE775_Missing_Release_of_File_Descriptor_or_Handle/"
+                "CWE775_Missing_Release_of_File_Descriptor_or_Handle__fopen_no_close_21.c",
+                "fopen -> no close",
+                "resource.stream_lifecycle.c_stdio",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE775_Missing_Release_of_File_Descriptor_or_Handle/"
+                "CWE775_Missing_Release_of_File_Descriptor_or_Handle__open_no_close_21.c",
+                "open -> no close",
+                "resource.fd_lifecycle.user_posix",
+            ),
+            (
+                "juliet-api-misuse/testcases/CWE775_Missing_Release_of_File_Descriptor_or_Handle/"
+                "CWE775_Missing_Release_of_File_Descriptor_or_Handle__w32CreateFile_no_close_21.c",
+                "CreateFile -> no close",
+                "resource.handle_lifecycle.win32",
+            ),
+        ]
+
+        for file_name, route, expected_profile_id in cases:
+            with self.subTest(file_name=file_name):
+                profile = oracle_profiles.build_oracle_profile(
+                    {
+                        "file": file_name,
+                        "route": route,
+                        "cwe_candidates": ["CWE-775"],
+                        "claim": "Juliet missing release route leaks the acquired resource",
+                    }
+                )
+
+                self.assertEqual(profile["profile_id"], expected_profile_id)
+                self.assertTrue(profile["supported"])
+                self.assertIn(
+                    f"MAGUS_ORACLE_FLAW profile={expected_profile_id} reason=missing_release",
+                    profile["confirm_patterns"],
+                )
+
+    def test_cwe672_container_lifetime_selects_cpp_iterator_profile(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "file": (
+                    "juliet-api-misuse/testcases/CWE672_Operation_on_Resource_After_Expiration_or_Release/"
+                    "CWE672_Operation_on_Resource_After_Expiration_or_Release__list_int_21.cpp"
+                ),
+                "route": "std::list<int>::iterator -> data.clear() -> *iterator",
+                "cwe_candidates": ["CWE-672"],
+                "claim": "Iterator is used after the std::list resource is invalidated by clear().",
+                "evidence_slice": "list<int>::iterator i = data.begin(); data.clear(); printIntLine(*i);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "resource.cpp_iterator_lifecycle")
+        self.assertTrue(profile["supported"])
+        self.assertNotEqual(profile["profile_id"], "resource.fd_lifecycle.user_posix")
+        self.assertIn("attempt to dereference a singular iterator", profile["confirm_patterns"])
 
     def test_selects_linux_kernel_lifecycle_separately_from_user_space_open(self):
         profile = oracle_profiles.build_oracle_profile(

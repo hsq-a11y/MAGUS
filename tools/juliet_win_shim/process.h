@@ -41,6 +41,7 @@ wchar_t *_wgetenv(const wchar_t *name);
 int _putenv(const char *envstring);
 int _wputenv(const wchar_t *envstring);
 
+int _wsystem(const wchar_t *command);
 FILE *_popen(const char *command, const char *type);
 FILE *_wpopen(const wchar_t *command, const wchar_t *type);
 int _pclose(FILE *stream);

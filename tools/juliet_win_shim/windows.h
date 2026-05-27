@@ -20,7 +20,7 @@ typedef unsigned short WORD;
 typedef unsigned char BYTE;
 typedef unsigned char UCHAR;
 typedef uintptr_t ULONG_PTR;
-typedef void *HANDLE;
+typedef intptr_t HANDLE;
 typedef HANDLE HMODULE;
 typedef HANDLE HINSTANCE;
 typedef HANDLE HKEY;
@@ -415,3 +415,9 @@ void WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCriticalSection);
 #endif
 
 #endif
+
+/* Keep NULL compatible with Juliet's integer HANDLE casts under clang C.
+   This must sit outside the include guard because forced compatibility
+   includes can happen before std_testcase.h redefines NULL as (void *)0. */
+#undef NULL
+#define NULL 0
