@@ -232,13 +232,14 @@ class OutputRoutingTests(unittest.TestCase):
 
     def test_p0_goes_to_d(self):
         d_file, audit_file = io.StringIO(), io.StringIO()
-        bucket = agent1.process_completed_future(
+        bucket, usage_events = agent1.process_completed_future(
             agent1.CompletedFuture(self._p0_record()),
             _candidate(),
             d_file,
             audit_file,
         )
         self.assertEqual(bucket, "p0_d")
+        self.assertEqual(usage_events, [])
         self.assertEqual(audit_file.getvalue(), "")
         row = json.loads(d_file.getvalue())
         self.assertEqual(row["status"], "pending_dynamic_verification")
@@ -251,17 +252,88 @@ class OutputRoutingTests(unittest.TestCase):
         record["agent_verdict"] = "audit_only"
         record["routing_decision"] = "audit_only"
         d_file, audit_file = io.StringIO(), io.StringIO()
-        bucket = agent1.process_completed_future(
+        bucket, usage_events = agent1.process_completed_future(
             agent1.CompletedFuture(record),
             _candidate(),
             d_file,
             audit_file,
         )
         self.assertEqual(bucket, "audit")
+        self.assertEqual(usage_events, [])
         self.assertEqual(d_file.getvalue(), "")
         row = json.loads(audit_file.getvalue())
         self.assertEqual(row["priority"], "P3")
         self.assertEqual(row["routing_decision"], "audit_only")
+
+    def test_llm_usage_event_records_cache_counters(self):
+        events = []
+        response = types.SimpleNamespace(
+            usage={
+                "prompt_tokens": 100,
+                "completion_tokens": 10,
+                "total_tokens": 110,
+                "prompt_cache_hit_tokens": 80,
+                "prompt_cache_miss_tokens": 20,
+            }
+        )
+        context = agent1.llm_usage_context(
+            _candidate(),
+            1,
+            "red",
+            "red_proposer",
+            "PROPOSER_PROMPT",
+            agent1.PROPOSER_PROMPT,
+        )
+
+        agent1.record_llm_usage_event(events, context, "static prefix\ncandidate evidence", 0, "success", response)
+
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["prompt_cache_hit_tokens"], 80)
+        self.assertEqual(events[0]["prompt_cache_miss_tokens"], 20)
+        self.assertEqual(events[0]["prompt_cache_hit_rate"], 0.8)
+        summary = agent1.usage_summary(events)
+        self.assertEqual(summary["calls"], 1)
+        self.assertEqual(summary["prompt_cache_hit_tokens"], 80)
+        self.assertEqual(summary["prompt_cache_miss_tokens"], 20)
+        self.assertEqual(summary["prompt_cache_hit_rate"], 0.8)
+
+    def test_prompt_static_prefix_is_before_dynamic_inputs(self):
+        cases = [
+            (
+                agent1.PROPOSER_PROMPT,
+                {"evidence_brief": "route A evidence"},
+                {"evidence_brief": "route B evidence"},
+            ),
+            (
+                agent1.BLUE_CHALLENGER_PROMPT,
+                {"evidence_brief": "route A evidence", "proposer_json": '{"claim":"A"}'},
+                {"evidence_brief": "route B evidence", "proposer_json": '{"claim":"B"}'},
+            ),
+            (
+                agent1.RED_REBUTTAL_PROMPT,
+                {
+                    "evidence_brief": "route A evidence",
+                    "proposer_json": '{"claim":"A"}',
+                    "challenger_json": '{"challenge":"A"}',
+                },
+                {
+                    "evidence_brief": "route B evidence",
+                    "proposer_json": '{"claim":"B"}',
+                    "challenger_json": '{"challenge":"B"}',
+                },
+            ),
+        ]
+        for template, first_values, second_values in cases:
+            with self.subTest(template=template.splitlines()[0]):
+                static_prefix = agent1.template_static_prefix(template)
+                self.assertGreater(len(static_prefix), 1000)
+                first_prompt = template.format(**first_values)
+                second_prompt = template.format(**second_values)
+                self.assertTrue(first_prompt.startswith(static_prefix))
+                self.assertTrue(second_prompt.startswith(static_prefix))
+                self.assertEqual(first_prompt[: len(static_prefix)], second_prompt[: len(static_prefix)])
+                self.assertNotIn("route A evidence", static_prefix)
+                self.assertNotIn("route B evidence", static_prefix)
 
 
 if __name__ == "__main__":

@@ -217,6 +217,23 @@ static const char *payload_value(void)
     return payload;
 }
 
+LPVOID WINAPI RtlSecureZeroMemory(LPVOID ptr, size_t cnt)
+{
+    volatile unsigned char *cursor = (volatile unsigned char *)ptr;
+    while (cnt > 0)
+    {
+        *cursor = 0;
+        cursor++;
+        cnt--;
+    }
+    return ptr;
+}
+
+LPVOID WINAPI SecureZeroMemory(LPVOID ptr, size_t cnt)
+{
+    return RtlSecureZeroMemory(ptr, cnt);
+}
+
 static int contains_payload(const char *value)
 {
     const char *payload = payload_value();
@@ -2261,15 +2278,380 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
     return format == NULL ? 0 : (int)strlen(format);
 }
 
-int vswprintf(wchar_t *str, size_t size, const wchar_t *format, va_list ap)
+typedef struct _MAGUS_WIDE_FORMAT_OUT {
+    wchar_t *buffer;
+    size_t size;
+    size_t count;
+} MAGUS_WIDE_FORMAT_OUT;
+
+static void wide_format_putwc(MAGUS_WIDE_FORMAT_OUT *out, wchar_t ch)
 {
-    (void)ap;
-    sink_marker_w("vswprintf", format);
-    if (str != NULL && size > 0)
+    if (out->buffer != NULL && out->size > 0 && out->count + 1 < out->size)
     {
-        swprintf(str, size, L"%ls", format == NULL ? L"" : format);
+        out->buffer[out->count] = ch;
     }
-    return format == NULL ? 0 : (int)wcslen(format);
+    out->count++;
+}
+
+static void wide_format_pad(MAGUS_WIDE_FORMAT_OUT *out, int count)
+{
+    while (count > 0)
+    {
+        wide_format_putwc(out, L' ');
+        count--;
+    }
+}
+
+static void wide_format_putws_raw(MAGUS_WIDE_FORMAT_OUT *out, const wchar_t *value, size_t len)
+{
+    size_t i;
+    for (i = 0; i < len; i++)
+    {
+        wide_format_putwc(out, value[i]);
+    }
+}
+
+static void wide_format_put_wide_string(MAGUS_WIDE_FORMAT_OUT *out, const wchar_t *value, int width, int precision, int left_align)
+{
+    size_t len = 0;
+    if (value == NULL)
+    {
+        value = L"(null)";
+    }
+    while (value[len] != L'\0' && (precision < 0 || len < (size_t)precision))
+    {
+        len++;
+    }
+    if (!left_align && width > (int)len)
+    {
+        wide_format_pad(out, width - (int)len);
+    }
+    wide_format_putws_raw(out, value, len);
+    if (left_align && width > (int)len)
+    {
+        wide_format_pad(out, width - (int)len);
+    }
+}
+
+static void wide_format_put_narrow_string(MAGUS_WIDE_FORMAT_OUT *out, const char *value, int width, int precision, int left_align)
+{
+    size_t len = 0;
+    if (value == NULL)
+    {
+        value = "(null)";
+    }
+    while (value[len] != '\0' && (precision < 0 || len < (size_t)precision))
+    {
+        len++;
+    }
+    if (!left_align && width > (int)len)
+    {
+        wide_format_pad(out, width - (int)len);
+    }
+    for (size_t i = 0; i < len; i++)
+    {
+        wide_format_putwc(out, (wchar_t)(unsigned char)value[i]);
+    }
+    if (left_align && width > (int)len)
+    {
+        wide_format_pad(out, width - (int)len);
+    }
+}
+
+static void wide_format_finish(MAGUS_WIDE_FORMAT_OUT *out)
+{
+    if (out->buffer != NULL && out->size > 0)
+    {
+        size_t index = out->count < out->size ? out->count : out->size - 1;
+        out->buffer[index] = L'\0';
+    }
+}
+
+static void wide_format_put_number(MAGUS_WIDE_FORMAT_OUT *out, const char *format, int length_kind, wchar_t conversion, va_list *args)
+{
+    char buffer[128];
+    buffer[0] = '\0';
+    switch (conversion)
+    {
+    case L'd':
+    case L'i':
+        if (length_kind == 2)
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, long long));
+        }
+        else if (length_kind == 1)
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, long));
+        }
+        else
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, int));
+        }
+        break;
+    case L'u':
+    case L'o':
+    case L'x':
+    case L'X':
+        if (length_kind == 2)
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, unsigned long long));
+        }
+        else if (length_kind == 1)
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, unsigned long));
+        }
+        else
+        {
+            snprintf(buffer, sizeof(buffer), format, va_arg(*args, unsigned int));
+        }
+        break;
+    case L'p':
+        snprintf(buffer, sizeof(buffer), format, va_arg(*args, void *));
+        break;
+    default:
+        wide_format_putwc(out, L'%');
+        wide_format_putwc(out, conversion);
+        return;
+    }
+    wide_format_put_narrow_string(out, buffer, 0, -1, 0);
+}
+
+static void wide_format_append_decimal(char *buffer, size_t buffer_size, size_t *len, int value)
+{
+    int written;
+    if (*len >= buffer_size)
+    {
+        *len = buffer_size - 1;
+        return;
+    }
+    written = snprintf(buffer + *len, buffer_size - *len, "%d", value);
+    if (written > 0)
+    {
+        *len += (size_t)written;
+        if (*len >= buffer_size)
+        {
+            *len = buffer_size - 1;
+        }
+    }
+}
+
+int _vsnwprintf(wchar_t *str, size_t size, const wchar_t *format, va_list ap)
+{
+    MAGUS_WIDE_FORMAT_OUT out;
+    va_list args;
+    const wchar_t *cursor;
+
+    out.buffer = str;
+    out.size = size;
+    out.count = 0;
+    if (format == NULL)
+    {
+        wide_format_finish(&out);
+        return 0;
+    }
+
+    va_copy(args, ap);
+    for (cursor = format; *cursor != L'\0'; cursor++)
+    {
+        char narrow_format[64];
+        size_t narrow_len = 0;
+        int left_align = 0;
+        int width = 0;
+        int precision = -1;
+        int length_kind = 0;
+        wchar_t conversion;
+
+        if (*cursor != L'%')
+        {
+            wide_format_putwc(&out, *cursor);
+            continue;
+        }
+
+        cursor++;
+        if (*cursor == L'%')
+        {
+            wide_format_putwc(&out, L'%');
+            continue;
+        }
+
+        narrow_format[narrow_len++] = '%';
+        while (*cursor == L'-' || *cursor == L'+' || *cursor == L' ' || *cursor == L'#' || *cursor == L'0')
+        {
+            if (*cursor == L'-')
+            {
+                left_align = 1;
+            }
+            if (narrow_len + 1 < sizeof(narrow_format))
+            {
+                narrow_format[narrow_len++] = (char)*cursor;
+            }
+            cursor++;
+        }
+
+        if (*cursor == L'*')
+        {
+            width = va_arg(args, int);
+            if (width < 0)
+            {
+                left_align = 1;
+                width = -width;
+            }
+            wide_format_append_decimal(narrow_format, sizeof(narrow_format), &narrow_len, width);
+            cursor++;
+        }
+        else
+        {
+            while (*cursor >= L'0' && *cursor <= L'9')
+            {
+                width = width * 10 + (int)(*cursor - L'0');
+                if (narrow_len + 1 < sizeof(narrow_format))
+                {
+                    narrow_format[narrow_len++] = (char)*cursor;
+                }
+                cursor++;
+            }
+        }
+
+        if (*cursor == L'.')
+        {
+            precision = 0;
+            if (narrow_len + 1 < sizeof(narrow_format))
+            {
+                narrow_format[narrow_len++] = '.';
+            }
+            cursor++;
+            if (*cursor == L'*')
+            {
+                precision = va_arg(args, int);
+                if (precision < 0)
+                {
+                    precision = -1;
+                }
+                else
+                {
+                    wide_format_append_decimal(narrow_format, sizeof(narrow_format), &narrow_len, precision);
+                }
+                cursor++;
+            }
+            else
+            {
+                while (*cursor >= L'0' && *cursor <= L'9')
+                {
+                    precision = precision * 10 + (int)(*cursor - L'0');
+                    if (narrow_len + 1 < sizeof(narrow_format))
+                    {
+                        narrow_format[narrow_len++] = (char)*cursor;
+                    }
+                    cursor++;
+                }
+            }
+        }
+
+        if (*cursor == L'h')
+        {
+            length_kind = -1;
+            cursor++;
+            if (*cursor == L'h')
+            {
+                cursor++;
+            }
+        }
+        else if (*cursor == L'l' || *cursor == L'w')
+        {
+            length_kind = 1;
+            if (narrow_len + 2 < sizeof(narrow_format))
+            {
+                narrow_format[narrow_len++] = 'l';
+            }
+            cursor++;
+            if (*cursor == L'l')
+            {
+                length_kind = 2;
+                if (narrow_len + 2 < sizeof(narrow_format))
+                {
+                    narrow_format[narrow_len++] = 'l';
+                }
+                cursor++;
+            }
+        }
+        else if (*cursor == L'I')
+        {
+            cursor++;
+            if (cursor[0] == L'6' && cursor[1] == L'4')
+            {
+                length_kind = 2;
+                if (narrow_len + 3 < sizeof(narrow_format))
+                {
+                    narrow_format[narrow_len++] = 'l';
+                    narrow_format[narrow_len++] = 'l';
+                }
+                cursor += 2;
+            }
+            else if (cursor[0] == L'3' && cursor[1] == L'2')
+            {
+                cursor += 2;
+            }
+        }
+
+        conversion = *cursor;
+        if (conversion == L'\0')
+        {
+            break;
+        }
+
+        if (conversion == L's')
+        {
+            if (length_kind < 0)
+            {
+                wide_format_put_narrow_string(&out, va_arg(args, const char *), width, precision, left_align);
+            }
+            else
+            {
+                wide_format_put_wide_string(&out, va_arg(args, const wchar_t *), width, precision, left_align);
+            }
+        }
+        else if (conversion == L'S')
+        {
+            wide_format_put_narrow_string(&out, va_arg(args, const char *), width, precision, left_align);
+        }
+        else if (conversion == L'c')
+        {
+            if (length_kind < 0)
+            {
+                wide_format_putwc(&out, (wchar_t)(unsigned char)va_arg(args, int));
+            }
+            else
+            {
+                wide_format_putwc(&out, (wchar_t)va_arg(args, int));
+            }
+        }
+        else if (conversion == L'C')
+        {
+            wide_format_putwc(&out, (wchar_t)(unsigned char)va_arg(args, int));
+        }
+        else
+        {
+            if (narrow_len + 1 < sizeof(narrow_format))
+            {
+                narrow_format[narrow_len++] = (char)conversion;
+            }
+            narrow_format[narrow_len] = '\0';
+            wide_format_put_number(&out, narrow_format, length_kind, conversion, &args);
+        }
+    }
+    va_end(args);
+    wide_format_finish(&out);
+    return out.count > (size_t)INT_MAX ? INT_MAX : (int)out.count;
+}
+
+int _snwprintf(wchar_t *str, size_t size, const wchar_t *format, ...)
+{
+    int result;
+    va_list ap;
+    va_start(ap, format);
+    result = _vsnwprintf(str, size, format, ap);
+    va_end(ap);
+    return result;
 }
 
 int system(const char *command)

@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
+import subprocess
 import sys
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -248,6 +252,65 @@ class JulietHelperOutputTests(unittest.TestCase):
         text = process_header.read_text(encoding="utf-8")
 
         self.assertIn("int _wsystem(const wchar_t *command);", text)
+
+    def test_snwprintf_uses_msvc_wide_string_semantics(self):
+        compiler = shutil.which("clang-20") or shutil.which("clang") or shutil.which("cc")
+        if compiler is None:
+            self.skipTest("no C compiler available")
+        root = Path(__file__).resolve().parents[1]
+        shim_dir = root / "tools" / "juliet_win_shim"
+        source = textwrap.dedent(
+            r'''
+            #include "windows.h"
+            #include <stdio.h>
+
+            int main(void)
+            {
+                wchar_t data[64] = L"memberD_source_api_probe";
+                wchar_t filter[128];
+                wchar_t *cursor;
+                _snwprintf(filter, 128, L"(cn=%s)", data);
+                for (cursor = filter; *cursor != L'\0'; cursor++)
+                {
+                    putchar(*cursor >= 0 && *cursor < 128 ? (char)*cursor : '?');
+                }
+                putchar('\n');
+                return 0;
+            }
+            '''
+        )
+        with tempfile.TemporaryDirectory(prefix="magus-snwprintf-test-") as tmp:
+            tmp_path = Path(tmp)
+            probe = tmp_path / "probe.c"
+            binary = tmp_path / "probe"
+            probe.write_text(source, encoding="utf-8")
+            build = subprocess.run(
+                [
+                    compiler,
+                    "-D_WIN32",
+                    "-I",
+                    str(shim_dir),
+                    str(probe),
+                    str(shim_dir / "winapi_runtime_stubs.c"),
+                    "-o",
+                    str(binary),
+                ],
+                cwd=str(root),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
+            run = subprocess.run(
+                [str(binary)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(run.stdout.strip(), "(cn=memberD_source_api_probe)")
 
     def test_payload_candidates_use_runtime_inputs_json_once_each(self):
         old_value = self.runner.os.environ.get("MAGUS_D_RUNTIME_INPUTS_JSON")

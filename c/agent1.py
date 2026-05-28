@@ -3,6 +3,7 @@
 # 优化点：并发处理、流式写入、证据精简、结果缓存
 
 import argparse
+import hashlib
 import json
 import multiprocessing as mp
 import os
@@ -69,6 +70,11 @@ def parse_args():
     parser.add_argument("--audit-output", default="", help="P3和错误审计日志；默认从 --output 推导")
     parser.add_argument("--time-limit-seconds", type=float, default=None, help="C阶段提交候选的时间预算；默认不限制")
     parser.add_argument("--workers", type=positive_int, default=MAX_WORKERS, help=f"C阶段并发worker进程数；默认{MAX_WORKERS}")
+    parser.add_argument(
+        "--llm-usage-log",
+        default=os.environ.get("C_LLM_USAGE_LOG", ""),
+        help="可选LLM usage/cache诊断JSONL；默认关闭，也可用C_LLM_USAGE_LOG设置",
+    )
     return parser.parse_args()
 
 
@@ -300,10 +306,7 @@ def build_evidence_brief(cand):
 
 
 # ==================== 双Agent三轮对抗提示词 ====================
-PROPOSER_PROMPT = """你是一位红队安全审计专家。基于以下代码证据，高召回判断是否存在安全漏洞。
-
-**审计信息**：
-{evidence_brief}
+PROPOSER_PROMPT = """你是一位红队安全审计专家。请基于本提示末尾的代码证据，高召回判断是否存在安全漏洞。
 
 **任务**：
 - 必须按两步判断：第一步判断代码是否违反 C/C++ API contract 或 CWE 定义；第二步单独判断可利用性、影响范围和风险高低。
@@ -331,15 +334,12 @@ PROPOSER_PROMPT = """你是一位红队安全审计专家。基于以下代码�
   "evidence_complete": true
 }}
 
-**注意**：即使代码中可能存在防御检查，你也必须输出假设条件和路径，不要提前过滤。影响较弱只能降低风险/置信度，不能把明确的 API contract violation 改判为无漏洞。"""
+**注意**：即使代码中可能存在防御检查，你也必须输出假设条件和路径，不要提前过滤。影响较弱只能降低风险/置信度，不能把明确的 API contract violation 改判为无漏洞。
 
-BLUE_CHALLENGER_PROMPT = """你是独立蓝队复审专家。请严格挑战红队第一轮判断，寻找误报、漏报和证据缺口。
+**审计信息**：
+{evidence_brief}"""
 
-**代码证据**：
-{evidence_brief}
-
-**第一轮判断**：
-{proposer_json}
+BLUE_CHALLENGER_PROMPT = """你是独立蓝队复审专家。请严格挑战本提示末尾的红队第一轮判断，寻找误报、漏报和证据缺口。
 
 **任务**：
 - 如果红队已发现漏洞，检查 source/sink 或 API misuse 路径是否真实、是否可达、是否引用了不存在的代码，且是否被防御检查、错误处理、常量输入或安全路径阻断。
@@ -367,18 +367,15 @@ BLUE_CHALLENGER_PROMPT = """你是独立蓝队复审专家。请严格挑战红�
   "hard_contradictions": [],
   "evidence_complete": true,
   "challenge_notes": "蓝队审查结论"
-}}"""
-
-RED_REBUTTAL_PROMPT = """你是红队回应者。请回应蓝队挑战，输出可用于分流的最终漏洞假设。
+}}
 
 **代码证据**：
 {evidence_brief}
 
 **第一轮判断**：
-{proposer_json}
+{proposer_json}"""
 
-**第二轮蓝队挑战**：
-{challenger_json}
+RED_REBUTTAL_PROMPT = """你是红队回应者。请回应本提示末尾的蓝队挑战，输出可用于分流的最终漏洞假设。
 
 **分流要求**：
 - 如果存在可验证漏洞路径或 API contract/CWE violation，输出具体漏洞假设。
@@ -404,7 +401,16 @@ RED_REBUTTAL_PROMPT = """你是红队回应者。请回应蓝队挑战，输出�
   "evidence_complete": true,
   "stability": "stable_vulnerability|corrected_to_vulnerability|reaffirmed_after_blue_challenge|unstable_vulnerability|no_vulnerability|hard_contradiction",
   "final_notes": "红队回应说明"
-}}"""
+}}
+
+**代码证据**：
+{evidence_brief}
+
+**第一轮判断**：
+{proposer_json}
+
+**第二轮蓝队挑战**：
+{challenger_json}"""
 
 
 # ==================== LLM调用与假设构建模块 ====================
@@ -432,6 +438,122 @@ def response_preview(content, limit=500):
     return " ".join(str(content or "").split())[:limit]
 
 
+def sha256_text(text):
+    return hashlib.sha256(str(text or "").encode("utf-8")).hexdigest()
+
+
+def template_static_prefix(template):
+    dynamic_markers = ("{evidence_brief}", "{proposer_json}", "{challenger_json}")
+    indexes = [template.find(marker) for marker in dynamic_markers]
+    indexes = [index for index in indexes if index >= 0]
+    if not indexes:
+        return ""
+    prefix_template = template[: min(indexes)]
+    return prefix_template.format()
+
+
+def jsonable_usage(usage):
+    if usage is None:
+        return {}
+    if isinstance(usage, dict):
+        return dict(usage)
+    if hasattr(usage, "model_dump"):
+        try:
+            return usage.model_dump(mode="json", exclude_none=True)
+        except TypeError:
+            return usage.model_dump(exclude_none=True)
+    result = {}
+    extra = getattr(usage, "model_extra", None)
+    if isinstance(extra, dict):
+        result.update(extra)
+    for name in (
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "prompt_cache_hit_tokens",
+        "prompt_cache_miss_tokens",
+    ):
+        if hasattr(usage, name):
+            value = getattr(usage, name)
+            if value is not None:
+                result[name] = value
+    return result
+
+
+def numeric_usage_value(value):
+    if isinstance(value, bool) or value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def llm_cache_hit_rate(usage):
+    hit = numeric_usage_value(usage.get("prompt_cache_hit_tokens"))
+    miss = numeric_usage_value(usage.get("prompt_cache_miss_tokens"))
+    if hit is None or miss is None:
+        return None
+    total = hit + miss
+    if total <= 0:
+        return None
+    return hit / total
+
+
+def llm_usage_context(cand, round_no, agent, role, template_name, template):
+    static_prefix = template_static_prefix(template)
+    return {
+        "project_id": cand.get("project_id"),
+        "sample_id": cand.get("sample_id"),
+        "candidate_id": cand.get("candidate_id"),
+        "hypothesis_id": f"hyp_{cand.get('sample_id', 'unknown')}",
+        "round": round_no,
+        "agent": agent,
+        "role": role,
+        "template_name": template_name,
+        "static_prefix": static_prefix,
+    }
+
+
+def record_llm_usage_event(usage_events, context, prompt, attempt, status, response=None, error_detail=""):
+    if usage_events is None or context is None:
+        return
+    usage = jsonable_usage(getattr(response, "usage", None)) if response is not None else {}
+    hit = numeric_usage_value(usage.get("prompt_cache_hit_tokens"))
+    miss = numeric_usage_value(usage.get("prompt_cache_miss_tokens"))
+    prompt_text = str(prompt or "")
+    static_prefix = str(context.get("static_prefix") or "")
+    event = {
+        "schema_version": "stagec.llm_usage.v1",
+        "timestamp": utc_now(),
+        "model": MODEL_NAME,
+        "project_id": context.get("project_id"),
+        "sample_id": context.get("sample_id"),
+        "candidate_id": context.get("candidate_id"),
+        "hypothesis_id": context.get("hypothesis_id"),
+        "round": context.get("round"),
+        "agent": context.get("agent"),
+        "role": context.get("role"),
+        "template_name": context.get("template_name"),
+        "attempt": attempt,
+        "status": status,
+        "prompt_chars": len(prompt_text),
+        "prompt_sha256": sha256_text(prompt_text),
+        "prompt_prefix_2048_sha256": sha256_text(prompt_text[:2048]),
+        "prompt_prefix_4096_sha256": sha256_text(prompt_text[:4096]),
+        "static_prefix_chars": len(static_prefix),
+        "static_prefix_sha256": sha256_text(static_prefix),
+        "dynamic_chars_after_static_prefix": max(0, len(prompt_text) - len(static_prefix)),
+        "usage": usage,
+        "prompt_cache_hit_tokens": hit,
+        "prompt_cache_miss_tokens": miss,
+        "prompt_cache_hit_rate": llm_cache_hit_rate(usage),
+    }
+    if error_detail:
+        event["error_detail"] = response_preview(error_detail, limit=500)
+    usage_events.append(event)
+
+
 def parse_llm_json(content):
     if content is None:
         raise ValueError("empty_response")
@@ -440,7 +562,7 @@ def parse_llm_json(content):
     return json.loads(content)
 
 
-def call_llm(prompt, deadline=None):
+def call_llm(prompt, deadline=None, usage_context=None, usage_events=None):
     """调用大模型API，返回解析后的JSON字典。max_tokens限制输出长度，不控制输入长度。"""
     timeout = LLM_REQUEST_TIMEOUT_SECONDS
     remaining = remaining_seconds(deadline)
@@ -465,17 +587,45 @@ def call_llm(prompt, deadline=None):
             )
             content = r.choices[0].message.content
             try:
-                return parse_llm_json(content)
+                parsed = parse_llm_json(content)
+                record_llm_usage_event(usage_events, usage_context, prompt, attempt, "success", response=r)
+                return parsed
             except JSONDecodeError as exc:
+                record_llm_usage_event(
+                    usage_events,
+                    usage_context,
+                    prompt,
+                    attempt,
+                    "invalid_json_response",
+                    response=r,
+                    error_detail=str(exc),
+                )
                 last_failure = llm_failure(
                     "invalid_json_response",
                     f"{exc}; preview={response_preview(content)}",
                 )
                 print(f"LLM JSON解析失败 attempt={attempt}: {exc}")
             except ValueError as exc:
+                record_llm_usage_event(
+                    usage_events,
+                    usage_context,
+                    prompt,
+                    attempt,
+                    str(exc),
+                    response=r,
+                    error_detail=str(exc),
+                )
                 last_failure = llm_failure(str(exc), f"attempt={attempt}")
                 print(f"LLM返回为空 attempt={attempt}: {exc}")
         except Exception as exc:
+            record_llm_usage_event(
+                usage_events,
+                usage_context,
+                prompt,
+                attempt,
+                "api_error",
+                error_detail=str(exc),
+            )
             last_failure = llm_failure("api_error", str(exc))
             print(f"LLM调用失败 attempt={attempt}: {exc}")
             break
@@ -1165,7 +1315,7 @@ def audit_timeout_record(cand, completed_rounds):
     }
 
 
-def audit_one(cand, deadline=None):
+def audit_one(cand, deadline=None, collect_llm_usage=False):
     """
     单个样本的双Agent三轮对抗审计流程：
     1. 红队提出高召回漏洞假设。
@@ -1175,43 +1325,81 @@ def audit_one(cand, deadline=None):
     sample_id = cand["sample_id"]
     brief = build_evidence_brief(cand)
     agent_rounds = []
+    llm_usage_events = [] if collect_llm_usage else None
 
     if not has_time_remaining(deadline):
-        return audit_timeout_record(cand, agent_rounds)
+        return audit_timeout_record(cand, agent_rounds), llm_usage_events or []
 
     print(f"[C] red round 1 proposer {sample_id}")
-    prop_resp = call_llm(PROPOSER_PROMPT.format(evidence_brief=brief), deadline)
+    prop_prompt = PROPOSER_PROMPT.format(evidence_brief=brief)
+    prop_resp = call_llm(
+        prop_prompt,
+        deadline,
+        (
+            llm_usage_context(cand, 1, "red", "red_proposer", "PROPOSER_PROMPT", PROPOSER_PROMPT)
+            if collect_llm_usage
+            else None
+        ),
+        llm_usage_events,
+    )
     if not prop_resp:
         prop_resp = llm_failure("round_1_failed", "empty_llm_response")
     agent_rounds.append({"round": 1, "agent": "red", "role": "red_proposer", "response": prop_resp})
 
     if not has_time_remaining(deadline):
-        return audit_timeout_record(cand, agent_rounds)
+        return audit_timeout_record(cand, agent_rounds), llm_usage_events or []
 
     print(f"[C] blue round 2 challenger {sample_id}")
-    challenge_resp = call_llm(BLUE_CHALLENGER_PROMPT.format(
+    challenge_prompt = BLUE_CHALLENGER_PROMPT.format(
         evidence_brief=brief,
         proposer_json=json.dumps(prop_resp, ensure_ascii=False),
-    ), deadline)
+    )
+    challenge_resp = call_llm(
+        challenge_prompt,
+        deadline,
+        (
+            llm_usage_context(
+                cand,
+                2,
+                "blue",
+                "blue_challenger",
+                "BLUE_CHALLENGER_PROMPT",
+                BLUE_CHALLENGER_PROMPT,
+            )
+            if collect_llm_usage
+            else None
+        ),
+        llm_usage_events,
+    )
     if not challenge_resp:
         challenge_resp = llm_failure("round_2_failed", "empty_llm_response")
     agent_rounds.append({"round": 2, "agent": "blue", "role": "blue_challenger", "response": challenge_resp})
 
     if not has_time_remaining(deadline):
-        return audit_timeout_record(cand, agent_rounds)
+        return audit_timeout_record(cand, agent_rounds), llm_usage_events or []
 
     print(f"[C] red round 3 rebuttal {sample_id}")
-    final_resp = call_llm(RED_REBUTTAL_PROMPT.format(
+    final_prompt = RED_REBUTTAL_PROMPT.format(
         evidence_brief=brief,
         proposer_json=json.dumps(prop_resp, ensure_ascii=False),
         challenger_json=json.dumps(challenge_resp, ensure_ascii=False),
-    ), deadline)
+    )
+    final_resp = call_llm(
+        final_prompt,
+        deadline,
+        (
+            llm_usage_context(cand, 3, "red", "red_rebuttal", "RED_REBUTTAL_PROMPT", RED_REBUTTAL_PROMPT)
+            if collect_llm_usage
+            else None
+        ),
+        llm_usage_events,
+    )
     if not final_resp:
         final_resp = llm_failure("round_3_failed", "empty_llm_response")
     agent_rounds.append({"round": 3, "agent": "red", "role": "red_rebuttal", "response": final_resp})
     responses = [prop_resp, challenge_resp, final_resp]
     selected, priority, decision, reason, contradictions = route_record(cand, responses)
-    return build_hypothesis(cand, selected, priority, decision, reason, contradictions, agent_rounds)
+    return build_hypothesis(cand, selected, priority, decision, reason, contradictions, agent_rounds), llm_usage_events or []
 
 
 # ==================== 主程序（并发 + 即时分流写入）====================
@@ -1226,6 +1414,48 @@ def append_jsonl(file_obj, row):
     file_obj.flush()
 
 
+def append_jsonl_rows(file_obj, rows):
+    if file_obj is None or not rows:
+        return
+    try:
+        for row in rows:
+            file_obj.write(json.dumps(row, ensure_ascii=False) + "\n")
+        file_obj.flush()
+    except OSError as exc:
+        print(f"[C] warning: failed to write LLM usage log: {exc}")
+
+
+def usage_summary(rows):
+    summary = {
+        "calls": 0,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+    }
+    for row in rows or []:
+        if row.get("status") != "success":
+            continue
+        summary["calls"] += 1
+        usage = row.get("usage") if isinstance(row.get("usage"), dict) else {}
+        for key in (
+            "prompt_cache_hit_tokens",
+            "prompt_cache_miss_tokens",
+            "prompt_tokens",
+            "completion_tokens",
+            "total_tokens",
+        ):
+            value = numeric_usage_value(usage.get(key))
+            if value is not None:
+                summary[key] += value
+    cache_total = summary["prompt_cache_hit_tokens"] + summary["prompt_cache_miss_tokens"]
+    summary["prompt_cache_hit_rate"] = (
+        summary["prompt_cache_hit_tokens"] / cache_total if cache_total > 0 else None
+    )
+    return summary
+
+
 class CompletedFuture:
     def __init__(self, result):
         self._result = result
@@ -1234,12 +1464,13 @@ class CompletedFuture:
         return self._result
 
 
-def audit_worker(cand, deadline, result_queue):
+def audit_worker(cand, deadline, result_queue, collect_llm_usage):
     try:
-        hyp = audit_one(cand, deadline)
+        hyp, usage_events = audit_one(cand, deadline, collect_llm_usage)
     except Exception as exc:
         hyp = audit_error_record(cand, exc)
-    result_queue.put({"pid": os.getpid(), "hyp": hyp})
+        usage_events = []
+    result_queue.put({"pid": os.getpid(), "hyp": hyp, "llm_usage_events": usage_events})
 
 
 def route_p0_to_d(hyp):
@@ -1253,9 +1484,15 @@ def route_p0_to_d(hyp):
 
 def process_completed_future(future, cand, d_file, audit_file):
     try:
-        hyp = future.result()
+        result = future.result()
     except Exception as e:
-        hyp = audit_error_record(cand, e)
+        result = {"hyp": audit_error_record(cand, e), "llm_usage_events": []}
+    if isinstance(result, dict) and "hyp" in result:
+        hyp = result.get("hyp") or audit_error_record(cand, RuntimeError("missing hypothesis"))
+        llm_usage_events = result.get("llm_usage_events", [])
+    else:
+        hyp = result
+        llm_usage_events = []
 
     if hyp.get("priority") == "P0":
         append_jsonl(d_file, route_p0_to_d(hyp))
@@ -1271,14 +1508,20 @@ def process_completed_future(future, cand, d_file, audit_file):
         f"priority={hyp.get('priority')} decision={hyp.get('routing_decision')} "
         f"reason={hyp.get('suspicion_reason')}"
     )
-    return bucket
+    return bucket, llm_usage_events
 
 
 def process_hypothesis_record(hyp, cand, d_file, audit_file):
-    return process_completed_future(CompletedFuture(hyp), cand, d_file, audit_file)
+    bucket, _usage_events = process_completed_future(
+        CompletedFuture({"hyp": hyp, "llm_usage_events": []}),
+        cand,
+        d_file,
+        audit_file,
+    )
+    return bucket
 
 
-def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_file):
+def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_file, llm_usage_file=None):
     if time_limit_seconds is not None and time_limit_seconds <= 0:
         raise ValueError("--time-limit-seconds must be greater than 0")
     if worker_count <= 0:
@@ -1289,6 +1532,7 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
     submitted_count = 0
     exhausted_reported = False
     counts = {"d": 0, "p0_d": 0, "audit": 0}
+    llm_usage_totals = usage_summary([])
     next_index = 0
 
     def within_budget():
@@ -1308,13 +1552,14 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
     ctx = mp.get_context(start_method) if start_method else mp.get_context()
     result_queue = ctx.Queue()
     running = {}
+    collect_llm_usage = llm_usage_file is not None
 
     def submit_available():
         nonlocal submitted_count, next_index
         while len(running) < worker_count and next_index < len(candidates) and within_budget():
             cand = candidates[next_index]
             next_index += 1
-            process = ctx.Process(target=audit_worker, args=(cand, deadline, result_queue))
+            process = ctx.Process(target=audit_worker, args=(cand, deadline, result_queue, collect_llm_usage))
             process.start()
             running[process.pid] = (process, cand)
             submitted_count += 1
@@ -1327,11 +1572,26 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
         if cand is None:
             return
         hyp = message.get("hyp")
-        bucket = process_completed_future(
-            CompletedFuture(hyp),
+        bucket, usage_events = process_completed_future(
+            CompletedFuture(
+                {
+                    "hyp": hyp,
+                    "llm_usage_events": message.get("llm_usage_events", []),
+                }
+            ),
             cand,
             d_file,
             audit_file,
+        )
+        append_jsonl_rows(llm_usage_file, usage_events)
+        worker_summary = usage_summary(usage_events)
+        for key, value in worker_summary.items():
+            if key == "prompt_cache_hit_rate":
+                continue
+            llm_usage_totals[key] += value
+        cache_total = llm_usage_totals["prompt_cache_hit_tokens"] + llm_usage_totals["prompt_cache_miss_tokens"]
+        llm_usage_totals["prompt_cache_hit_rate"] = (
+            llm_usage_totals["prompt_cache_hit_tokens"] / cache_total if cache_total > 0 else None
         )
         counts[bucket] += 1
 
@@ -1372,8 +1632,8 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
             drain_results()
             if pid not in running:
                 continue
-            bucket = process_completed_future(
-                CompletedFuture(audit_timeout_record(cand, [])),
+            bucket, _usage_events = process_completed_future(
+                CompletedFuture({"hyp": audit_timeout_record(cand, []), "llm_usage_events": []}),
                 cand,
                 d_file,
                 audit_file,
@@ -1414,12 +1674,15 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
                 process.join(timeout=0)
                 if wait_for_worker_result(pid, WORKER_RESULT_DRAIN_GRACE_SECONDS):
                     continue
-                bucket = process_completed_future(
+                bucket, _usage_events = process_completed_future(
                     CompletedFuture(
-                        audit_error_record(
-                            cand,
-                            RuntimeError(f"worker exited without result: exitcode={process.exitcode}"),
-                        )
+                        {
+                            "hyp": audit_error_record(
+                                cand,
+                                RuntimeError(f"worker exited without result: exitcode={process.exitcode}"),
+                            ),
+                            "llm_usage_events": [],
+                        }
                     ),
                     cand,
                     d_file,
@@ -1430,7 +1693,7 @@ def run_audit_queue(candidates, time_limit_seconds, worker_count, d_file, audit_
             submit_available()
 
     skipped = len(candidates) - submitted_count
-    return counts, submitted_count, skipped
+    return counts, submitted_count, skipped, llm_usage_totals
 
 
 def main():
@@ -1446,19 +1709,33 @@ def main():
 
     truncate_jsonl(output_path)
     truncate_jsonl(audit_output_path)
+    llm_usage_path = Path(args.llm_usage_log) if args.llm_usage_log else None
+    llm_usage_file = None
+    if llm_usage_path is not None:
+        try:
+            truncate_jsonl(llm_usage_path)
+            llm_usage_file = open(llm_usage_path, "a", encoding="utf-8", buffering=1)
+        except OSError as exc:
+            print(f"[C] warning: LLM usage log disabled: {exc}")
+            llm_usage_file = None
 
     # 使用worker进程并发处理，提高整体吞吐量
-    with (
-        open(output_path, "a", encoding="utf-8", buffering=1) as d_file,
-        open(audit_output_path, "a", encoding="utf-8", buffering=1) as audit_file,
-    ):
-        counts, submitted_count, skipped_count = run_audit_queue(
-            candidates,
-            args.time_limit_seconds,
-            args.workers,
-            d_file,
-            audit_file,
-        )
+    try:
+        with (
+            open(output_path, "a", encoding="utf-8", buffering=1) as d_file,
+            open(audit_output_path, "a", encoding="utf-8", buffering=1) as audit_file,
+        ):
+            counts, submitted_count, skipped_count, llm_usage_totals = run_audit_queue(
+                candidates,
+                args.time_limit_seconds,
+                args.workers,
+                d_file,
+                audit_file,
+                llm_usage_file,
+            )
+    finally:
+        if llm_usage_file is not None:
+            llm_usage_file.close()
 
     print(f"[C] workers: {args.workers}")
     print(f"[C] LLM-audited candidates: {submitted_count}/{len(candidates)}")
@@ -1468,6 +1745,17 @@ def main():
     print(f"[C] D candidates: {d_candidate_count} -> {output_path}")
     print(f"[C] P0 routed to D: {counts['p0_d']} -> {output_path}")
     print(f"[C] audit only: {counts['audit']} -> {audit_output_path}")
+    if llm_usage_path is not None and llm_usage_file is not None:
+        print(f"[C] LLM usage log: {llm_usage_path}")
+        print(
+            "[C] LLM usage summary: "
+            f"calls={llm_usage_totals['calls']} "
+            f"prompt_tokens={llm_usage_totals['prompt_tokens']} "
+            f"completion_tokens={llm_usage_totals['completion_tokens']} "
+            f"cache_hit={llm_usage_totals['prompt_cache_hit_tokens']} "
+            f"cache_miss={llm_usage_totals['prompt_cache_miss_tokens']} "
+            f"cache_hit_rate={llm_usage_totals['prompt_cache_hit_rate']}"
+        )
 
 
 if __name__ == "__main__":

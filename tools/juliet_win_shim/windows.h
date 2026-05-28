@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <wchar.h>
 
@@ -205,17 +206,13 @@ typedef LPSTARTUPINFOA LPSTARTUPINFO;
 #define _snprintf snprintf
 #endif
 
-#ifndef _snwprintf
-#define _snwprintf swprintf
-#endif
+int _snwprintf(wchar_t *str, size_t size, const wchar_t *format, ...);
 
 #ifndef _vsnprintf
 #define _vsnprintf vsnprintf
 #endif
 
-#ifndef _vsnwprintf
-#define _vsnwprintf vswprintf
-#endif
+int _vsnwprintf(wchar_t *str, size_t size, const wchar_t *format, va_list ap);
 
 #ifndef _malloca
 #include <alloca.h>
@@ -317,6 +314,8 @@ BOOL WINAPI OpenProcessToken(HANDLE ProcessHandle, DWORD DesiredAccess, HANDLE *
 BOOL WINAPI DuplicateTokenEx(HANDLE hExistingToken, DWORD dwDesiredAccess, LPSECURITY_ATTRIBUTES lpTokenAttributes, int ImpersonationLevel, int TokenType, HANDLE *phNewToken);
 BOOL WINAPI VirtualLock(LPVOID lpAddress, size_t dwSize);
 BOOL WINAPI VirtualUnlock(LPVOID lpAddress, size_t dwSize);
+LPVOID WINAPI RtlSecureZeroMemory(LPVOID ptr, size_t cnt);
+LPVOID WINAPI SecureZeroMemory(LPVOID ptr, size_t cnt);
 
 DWORD WINAPI GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer);
 DWORD WINAPI GetTempPathW(DWORD nBufferLength, LPWSTR lpBuffer);

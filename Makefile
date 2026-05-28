@@ -33,6 +33,7 @@ C_CANDIDATES ?= $(B_OUTPUT_DIR)/candidates.for_c.jsonl
 C_OUTPUT ?= c/out/hypotheses.jsonl
 C_TIME_LIMIT_SECONDS ?=
 C_WORKERS ?= 20
+C_LLM_USAGE_LOG ?=
 MIN_SUPPORT ?= 3
 D_CONTEXTS ?=
 D_OUTPUT_DIR ?= d/memberD_verifier/02_run_with_C/output
@@ -58,7 +59,7 @@ run-b:
 	python3 pipeline.py b --input $(B_INPUT) --llm-input $(B_LLM_INPUT) --output-dir $(B_OUTPUT_DIR) --min-support $(MIN_SUPPORT)
 
 run-c:
-	python3 pipeline.py c --candidates $(C_CANDIDATES) --output $(C_OUTPUT) --workers $(C_WORKERS) $(if $(C_TIME_LIMIT_SECONDS),--time-limit-seconds $(C_TIME_LIMIT_SECONDS),)
+	python3 pipeline.py c --candidates $(C_CANDIDATES) --output $(C_OUTPUT) --workers $(C_WORKERS) $(if $(C_TIME_LIMIT_SECONDS),--time-limit-seconds $(C_TIME_LIMIT_SECONDS),) $(if $(C_LLM_USAGE_LOG),--llm-usage-log $(C_LLM_USAGE_LOG),)
 
 run-d:
 	python3 pipeline.py d $(if $(D_CONTEXTS),--contexts $(D_CONTEXTS),)
@@ -67,4 +68,4 @@ run-report:
 	python3 pipeline.py report --d-output-dir $(D_OUTPUT_DIR) --report-root $(REPORT_ROOT) $(if $(REPORT_RUN_NAME),--run-name $(REPORT_RUN_NAME),)
 
 run-abcd:
-	python3 pipeline.py abcd --a-input $(A_INPUT) --a-output $(A_OUTPUT) --b-output-dir $(B_OUTPUT_DIR) --c-output $(C_OUTPUT) --min-support $(MIN_SUPPORT) --c-workers $(C_WORKERS) --report-root $(REPORT_ROOT) $(if $(REPORT_RUN_NAME),--report-run-name $(REPORT_RUN_NAME),) $(if $(C_TIME_LIMIT_SECONDS),--c-time-limit-seconds $(C_TIME_LIMIT_SECONDS),) $(if $(D_CONTEXTS),--d-contexts $(D_CONTEXTS),)
+	python3 pipeline.py abcd --a-input $(A_INPUT) --a-output $(A_OUTPUT) --b-output-dir $(B_OUTPUT_DIR) --c-output $(C_OUTPUT) --min-support $(MIN_SUPPORT) --c-workers $(C_WORKERS) --report-root $(REPORT_ROOT) $(if $(REPORT_RUN_NAME),--report-run-name $(REPORT_RUN_NAME),) $(if $(C_TIME_LIMIT_SECONDS),--c-time-limit-seconds $(C_TIME_LIMIT_SECONDS),) $(if $(C_LLM_USAGE_LOG),--c-llm-usage-log $(C_LLM_USAGE_LOG),) $(if $(D_CONTEXTS),--d-contexts $(D_CONTEXTS),)
