@@ -47,6 +47,11 @@ def _preserved_row():
                 "routing_decision": "dynamic_verification",
                 "agent_verdict": "vulnerability",
             },
+            "semantic_family": "network.cleartext_sensitive_transmission",
+            "semantic_contract": {
+                "family": "network.cleartext_sensitive_transmission",
+                "requires_route_bound_evidence": True,
+            },
         }
     )
     return row

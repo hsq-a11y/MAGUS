@@ -37,6 +37,7 @@ MEMORY_OOB_READ_PROFILE_ID = "memory.out_of_bounds_read"
 MEMORY_UAF_PROFILE_ID = "memory.use_after_free"
 INTEGER_OVERFLOW_PROFILE_ID = "integer.overflow"
 CPP_ITERATOR_PROFILE_ID = "resource.cpp_iterator_lifecycle"
+NETWORK_CLEARTEXT_PROFILE_ID = "network.cleartext_sensitive_transmission"
 LIFECYCLE_ROUTE_EVIDENCE_PATTERNS = (
     "MAGUS_ORACLE_FLAW profile=resource.",
     "MAGUS_JULIET_FLAW profile=resource.",
@@ -46,6 +47,10 @@ PATH_ROUTE_EVIDENCE_PATTERNS = (
     "reason=tainted_search_path_environment",
     "reason=tainted_dll_search_directory",
     "reason=unqualified_command_search_path",
+)
+NETWORK_CLEARTEXT_ROUTE_EVIDENCE_PATTERNS = (
+    "profile=network.cleartext_sensitive_transmission",
+    "reason=cleartext_sensitive_transmission",
 )
 LIFECYCLE_CAPABILITY_ENV = {
     POSIX_FD_LIFECYCLE_PROFILE_ID: "MAGUS_JULIET_REPORT_FD_LEAKS",
@@ -420,7 +425,14 @@ def has_sanitizer_evidence(output: str) -> bool:
 def has_route_bound_oracle_evidence(output: str) -> bool:
     if has_sanitizer_evidence(output):
         return True
-    return any(pattern in output for pattern in (*LIFECYCLE_ROUTE_EVIDENCE_PATTERNS, *PATH_ROUTE_EVIDENCE_PATTERNS))
+    return any(
+        pattern in output
+        for pattern in (
+            *LIFECYCLE_ROUTE_EVIDENCE_PATTERNS,
+            *PATH_ROUTE_EVIDENCE_PATTERNS,
+            *NETWORK_CLEARTEXT_ROUTE_EVIDENCE_PATTERNS,
+        )
+    )
 
 
 def compile_unit(command: list[str], tmp_path: Path) -> bool:
@@ -530,6 +542,31 @@ def route_bound_semantic_markers(stdout: str, route_executed: bool) -> list[str]
     return []
 
 
+def network_cleartext_semantic_markers(stdout: str, route_executed: bool, profile_id: str) -> list[str]:
+    if not route_executed or profile_id != NETWORK_CLEARTEXT_PROFILE_ID:
+        return []
+    sensitive_proof = []
+    if "MAGUS_JULIET_SINK name=LogonUserA" in stdout:
+        sensitive_proof.append("MAGUS_ORACLE_SENSITIVE_PROOF name=LogonUserA")
+    if "MAGUS_JULIET_SINK name=LogonUserW" in stdout:
+        sensitive_proof.append("MAGUS_ORACLE_SENSITIVE_PROOF name=LogonUserW")
+    if not sensitive_proof:
+        return []
+    protected = "MAGUS_JULIET_SINK name=CryptDecrypt" in stdout
+    send_seen = "MAGUS_JULIET_SINK name=send tainted=1" in stdout
+    recv_seen = "MAGUS_JULIET_SINK name=recv tainted=1" in stdout
+    network_value = send_seen or recv_seen
+    if protected:
+        return [*sensitive_proof, "MAGUS_ORACLE_PROTECTION name=CryptDecrypt reason=ciphertext_to_plaintext_before_sensitive_use"]
+    if network_value:
+        return [
+            *dict.fromkeys(sensitive_proof),
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            f"MAGUS_ORACLE_FLAW name={'send' if send_seen else 'recv'} reason=cleartext_sensitive_transmission",
+        ]
+    return list(dict.fromkeys(sensitive_proof))
+
+
 def oracle_capability_markers(profile_id: str, env: dict[str, str]) -> list[str]:
     env_name = LIFECYCLE_CAPABILITY_ENV.get(profile_id)
     if env_name and env.get(env_name):
@@ -599,7 +636,10 @@ def main() -> int:
             route_executed = route_was_executed(raw_stdout, source, scenario, oracle_output)
             if route_executed:
                 any_route_executed = True
-            semantic_markers = route_bound_semantic_markers(raw_stdout, route_executed)
+            semantic_markers = [
+                *route_bound_semantic_markers(raw_stdout, route_executed),
+                *network_cleartext_semantic_markers(raw_stdout, route_executed, args.oracle_profile_id),
+            ]
             capability_markers = oracle_capability_markers(args.oracle_profile_id, env) if route_executed else []
             for marker in semantic_markers:
                 print(marker)

@@ -113,6 +113,11 @@ def as_text(value: Any) -> str:
 
 
 def classify_attack(hyp: Dict[str, Any]) -> str:
+    semantic_contract = hyp.get("semantic_contract") if isinstance(hyp.get("semantic_contract"), dict) else {}
+    semantic_family = str(hyp.get("semantic_family") or semantic_contract.get("family") or "")
+    if semantic_family == "network.cleartext_sensitive_transmission":
+        return "cleartext_sensitive_transmission"
+
     text = as_text(
         [
             hyp.get("claim"),
@@ -133,6 +138,8 @@ def classify_attack(hyp: Dict[str, Any]) -> str:
         return "integer_overflow"
     if "cwe-78" in text or "command injection" in text or "命令注入" in text:
         return "command_injection"
+    if "cwe-319" in text or "cleartext" in text or "plaintext" in text or "明文" in text:
+        return "cleartext_sensitive_transmission"
     if "cwe-22" in text or "path traversal" in text or "目录遍历" in text:
         return "path_traversal"
     if "cwe-89" in text or "sql injection" in text or "sql注入" in text:
@@ -249,6 +256,8 @@ def seed_inputs_for_attack(attack_type: str) -> List[str]:
         return ["shell metacharacter payload", "argument separator payload", "environment-controlled command"]
     if attack_type == "sql_injection":
         return ["quote-breaking SQL string", "boolean tautology", "union-select probe"]
+    if attack_type == "cleartext_sensitive_transmission":
+        return ["sensitive credential string", "network-delivered password", "unencrypted authentication secret"]
     return [
         "boundary-sized input",
         "null/zero/negative argument where type permits",
@@ -325,6 +334,8 @@ def make_source_api_case(hyp: Dict[str, Any], auto_fill: bool) -> Dict[str, Any]
         "entry_symbol": symbol,
         "oracle_profile_id": oracle_profile.get("profile_id"),
         "oracle_profile": oracle_profile,
+        "semantic_family": hyp.get("semantic_family") or oracle_profile.get("semantic_family"),
+        "semantic_contract": hyp.get("semantic_contract") or {},
         "api_sequence": hyp.get("api_sequence") or hyp.get("attack_path") or [],
         "poc_plan": [
             f"Build or load project containing {source_file or 'the target source file'}",

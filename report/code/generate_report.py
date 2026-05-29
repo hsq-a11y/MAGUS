@@ -139,6 +139,8 @@ def final_report_record(row: Dict[str, Any]) -> Dict[str, Any]:
         },
         "vulnerability_type": vulnerability_type(row),
         "cwe_candidates": cwe_candidates(row),
+        "semantic_family": row.get("semantic_family"),
+        "semantic_contract": row.get("semantic_contract"),
         "risk_level": row.get("severity") or row.get("priority") or "P0",
         "trigger_condition": trigger_condition(row),
         "claim": row.get("claim"),

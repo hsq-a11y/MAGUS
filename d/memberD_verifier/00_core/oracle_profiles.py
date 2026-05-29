@@ -39,6 +39,18 @@ def hypothesis_text(hypothesis: Dict[str, Any]) -> str:
     return as_text(parts)
 
 
+def semantic_family(hypothesis: Dict[str, Any]) -> str:
+    value = hypothesis.get("semantic_family")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    contract = hypothesis.get("semantic_contract")
+    if isinstance(contract, dict):
+        family = contract.get("family")
+        if isinstance(family, str) and family.strip():
+            return family.strip()
+    return ""
+
+
 @dataclass(frozen=True)
 class OracleProfile:
     profile_id: str
@@ -63,6 +75,8 @@ LIFECYCLE_FAILURE_REASONS: Tuple[str, ...] = (
     "failed_acquire_used",
     "ownership_transfer_lost",
 )
+
+NETWORK_CLEARTEXT_PROFILE_ID = "network.cleartext_sensitive_transmission"
 
 
 def lifecycle_generic_markers(profile_id: str) -> Tuple[str, ...]:
@@ -217,6 +231,64 @@ def extend_marker_map(
 
 
 PROFILES: Tuple[OracleProfile, ...] = (
+    OracleProfile(
+        profile_id=NETWORK_CLEARTEXT_PROFILE_ID,
+        description="Sensitive data crosses a network boundary without cryptographic protection.",
+        cwe_tokens=("cwe-319", "cwe319"),
+        keywords=(
+            "cleartext",
+            "plaintext",
+            "clear text",
+            "plain text",
+            "sensitive information",
+            "sensitive data",
+            "password",
+            "network boundary",
+            "send",
+            "recv",
+            "socket",
+            "unencrypted",
+        ),
+        api_markers={
+            "send": (
+                "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+                "MAGUS_ORACLE_FLAW name=send reason=cleartext_sensitive_transmission",
+            ),
+            "recv": (
+                "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+                "MAGUS_ORACLE_FLAW name=recv reason=cleartext_sensitive_transmission",
+            ),
+            "LogonUserA": (
+                "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            ),
+            "LogonUserW": (
+                "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            ),
+        },
+        generic_markers=(
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            "MAGUS_ORACLE_FLAW name=send reason=cleartext_sensitive_transmission",
+            "MAGUS_ORACLE_FLAW name=recv reason=cleartext_sensitive_transmission",
+        ),
+        accepted_evidence=(
+            "route-bound oracle observed sensitive data crossing a network boundary without encryption",
+        ),
+        semantic_model={
+            "kind": "network_data_exposure",
+            "family": "cleartext_sensitive_transmission",
+            "source_boundary": "network",
+            "sink_boundary": "network",
+            "sensitivity_proof_apis": ["LogonUserA", "LogonUserW"],
+            "non_sink_apis": ["LogonUserA", "LogonUserW", "CryptDecrypt", "CryptHashData", "CloseHandle", "closesocket"],
+            "oracle_obligations": [
+                "prove MAGUS_ROUTE_EXECUTED for the selected route or source/API sequence",
+                "prove that the value is sensitive, for example by route-bound credential API use",
+                "prove that the sensitive value crossed a network boundary in cleartext",
+                "do not confirm from credential, crypto, or resource lifecycle API markers alone",
+                "return MAGUS_ORACLE_UNSUPPORTED when route execution is observable but cleartext network semantics are not",
+            ],
+        },
+    ),
     OracleProfile(
         profile_id="process.untrusted_library_load",
         description="Untrusted or relative path reaches dynamic library loading.",
@@ -859,6 +931,34 @@ PROFILES: Tuple[OracleProfile, ...] = (
 API_NAMES = tuple(sorted({api for profile in PROFILES for api in profile.api_names}, key=len, reverse=True))
 PROFILE_BY_ID = {profile.profile_id: profile for profile in PROFILES}
 
+SEMANTIC_FAMILY_PROFILE_IDS: Dict[str, Tuple[str, ...]] = {
+    NETWORK_CLEARTEXT_PROFILE_ID: (NETWORK_CLEARTEXT_PROFILE_ID,),
+    "process.untrusted_library_load": ("process.untrusted_library_load",),
+    "process.command_execution": ("process.command_execution",),
+    "memory.out_of_bounds_write": ("memory.out_of_bounds_write",),
+    "memory.out_of_bounds_read": ("memory.out_of_bounds_read",),
+    "memory.use_after_free": ("memory.use_after_free",),
+    "integer.overflow": ("integer.overflow",),
+    CPP_ITERATOR_PROFILE_ID: (CPP_ITERATOR_PROFILE_ID,),
+    "ldap.injection": ("ldap.injection",),
+    "config.external_control": ("config.external_control",),
+    "crypto.broken_algorithm": ("crypto.broken_algorithm",),
+    "crypto.missing_required_step": ("crypto.missing_required_step",),
+    "crypto.weak_prng": ("crypto.weak_prng",),
+    "tempfile.insecure_name": ("tempfile.insecure_name",),
+    "path.fixed_buffer_append": ("path.fixed_buffer_append",),
+    "dns.security_decision": ("dns.security_decision",),
+    "return_value.unchecked_failure": ("return_value.unchecked_failure",),
+    "memory.sensitive_without_lock": ("memory.sensitive_without_lock",),
+    "path.untrusted_search_path": ("path.untrusted_search_path",),
+    "resource_lifecycle": (
+        POSIX_FD_PROFILE_ID,
+        STDIO_PROFILE_ID,
+        WIN32_HANDLE_PROFILE_ID,
+        LINUX_KERNEL_PROFILE_ID,
+    ),
+}
+
 RESOURCE_LIFECYCLE_API_NAMES = frozenset(
     (*POSIX_FD_ACQUIRE_APIS, *POSIX_FD_RELEASE_APIS, *POSIX_FD_TRANSFER_APIS, *POSIX_FD_DUP_APIS)
     + (*STDIO_ACQUIRE_APIS, *STDIO_RELEASE_APIS)
@@ -939,7 +1039,27 @@ def infer_api_names(hypothesis: Dict[str, Any]) -> List[str]:
     return sorted(set(found), key=lambda item: API_NAMES.index(item))
 
 
+def _has_network_cleartext_hint(haystack_lower: str) -> bool:
+    if _contains_token(haystack_lower, "cwe-319") or _contains_token(haystack_lower, "cwe319"):
+        return True
+    cleartext = any(
+        term in haystack_lower or _contains_token(haystack_lower, term)
+        for term in ("cleartext", "plaintext", "plain text", "unencrypted", "without encryption")
+    )
+    sensitive = any(
+        term in haystack_lower or _contains_token(haystack_lower, term)
+        for term in ("sensitive data", "sensitive information", "password", "credential", "secret")
+    )
+    network = any(
+        term in haystack_lower or _contains_token(haystack_lower, term)
+        for term in ("network", "socket", "send", "recv", "transmission")
+    )
+    return cleartext and sensitive and network
+
+
 def _score_profile(profile: OracleProfile, haystack_lower: str, api_names: Iterable[str]) -> int:
+    if profile.profile_id == NETWORK_CLEARTEXT_PROFILE_ID and not _has_network_cleartext_hint(haystack_lower):
+        return 0
     score = 0
     api_set = set(api_names)
     score += 6 * sum(1 for api in profile.api_names if api in api_set)
@@ -988,9 +1108,48 @@ def _select_resource_origin_profile(haystack_lower: str, api_names: List[str]) -
     return profile, matched, 100
 
 
+def _explicit_semantic_profile(hypothesis: Dict[str, Any], haystack_lower: str, api_names: List[str]) -> Tuple[OracleProfile | None, List[str], int, bool]:
+    family = semantic_family(hypothesis)
+    if not family or family == "source_api.generic":
+        return None, [], 0, False
+
+    allowed_ids = SEMANTIC_FAMILY_PROFILE_IDS.get(family)
+    if not allowed_ids:
+        return None, [], 0, True
+
+    if family == "resource_lifecycle":
+        profile, matched, score = _select_resource_origin_profile(haystack_lower, api_names)
+        if profile is not None and profile.profile_id in allowed_ids:
+            return profile, matched, score, True
+        return None, [], 0, True
+
+    candidates = [PROFILE_BY_ID[profile_id] for profile_id in allowed_ids if profile_id in PROFILE_BY_ID]
+    if not candidates:
+        return None, [], 0, True
+    best: Tuple[OracleProfile | None, int] = (None, -1)
+    for profile in candidates:
+        score = _score_profile(profile, haystack_lower, api_names)
+        if score > best[1]:
+            best = (profile, score)
+    profile = best[0]
+    if profile is None:
+        return None, [], 0, True
+    matched = [api for api in api_names if api in profile.api_markers]
+    return profile, matched, max(best[1], 100), True
+
+
 def select_profile(hypothesis: Dict[str, Any]) -> Tuple[OracleProfile | None, List[str], int]:
     haystack_lower = hypothesis_text(hypothesis).lower()
     api_names = infer_api_names(hypothesis)
+
+    explicit_profile, explicit_matched, explicit_score, explicit_seen = _explicit_semantic_profile(
+        hypothesis,
+        haystack_lower,
+        api_names,
+    )
+    if explicit_seen:
+        return explicit_profile, explicit_matched, explicit_score
+
     if _is_cwe672_container_lifetime(haystack_lower, api_names):
         profile = PROFILE_BY_ID.get(CPP_ITERATOR_PROFILE_ID)
         if profile is not None:
@@ -1027,10 +1186,12 @@ def _confirm_patterns(profile: OracleProfile, matched_apis: List[str]) -> List[s
 def build_oracle_profile(hypothesis: Dict[str, Any]) -> Dict[str, Any]:
     profile, matched_apis, score = select_profile(hypothesis)
     inferred_apis = infer_api_names(hypothesis)
+    family = semantic_family(hypothesis)
     if profile is None:
         return {
-            "profile_id": "unsupported.unclassified_source_api",
+            "profile_id": "unsupported.semantic_evidence_collector" if family else "unsupported.unclassified_source_api",
             "supported": False,
+            "semantic_family": family,
             "selection_score": score,
             "matched_apis": [],
             "inferred_apis": inferred_apis,
@@ -1047,6 +1208,7 @@ def build_oracle_profile(hypothesis: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "profile_id": profile.profile_id,
         "supported": True,
+        "semantic_family": family or profile.profile_id,
         "selection_score": score,
         "description": profile.description,
         "matched_apis": matched_apis,

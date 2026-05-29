@@ -508,6 +508,17 @@ def evidence_fields(hyp: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def semantic_fields(hyp: Dict[str, Any]) -> Dict[str, Any]:
+    fields: Dict[str, Any] = {}
+    family = hyp.get("semantic_family")
+    if family not in (None, "", []):
+        fields["semantic_family"] = family
+    contract = hyp.get("semantic_contract")
+    if isinstance(contract, dict) and contract:
+        fields["semantic_contract"] = contract
+    return fields
+
+
 def routing_fields(hyp: Dict[str, Any]) -> Dict[str, Any]:
     fields: Dict[str, Any] = {}
     for key in ("priority", "routing_decision", "suspicion_reason", "agent_verdict"):
@@ -554,6 +565,7 @@ def failed_record(hyp: Dict[str, Any], code: str, note: str, suggested_action: s
     }
     record.update(evidence_fields(hyp))
     record.update(hypothesis_context_fields(hyp))
+    record.update(semantic_fields(hyp))
     record.update(routing_fields(hyp))
     return record
 
@@ -571,7 +583,34 @@ def stage_c_priority(hyp: Dict[str, Any]) -> str:
 
 
 def can_preserve_stage_c_verdict(hyp: Dict[str, Any]) -> bool:
-    return stage_c_priority(hyp) in STAGE_C_PRESERVABLE_PRIORITIES
+    if stage_c_priority(hyp) not in STAGE_C_PRESERVABLE_PRIORITIES:
+        return False
+    if hyp.get("hard_contradictions") not in (None, "", []):
+        return False
+    contract = hyp.get("semantic_contract")
+    family = hyp.get("semantic_family")
+    contract_family = contract.get("family") if isinstance(contract, dict) else None
+    family_text = str(family or contract_family or "").strip()
+    if not isinstance(contract, dict) or not family_text or family_text == "source_api.generic":
+        return False
+    if contract.get("required_semantics") in (None, "", []):
+        return False
+    if contract.get("requires_route_bound_evidence") is False:
+        return False
+    protective = contract.get("protective_counter_evidence") or contract.get("protective_evidence")
+    if protective not in (None, "", []):
+        return False
+    return True
+
+
+def case_has_supported_oracle_profile(case: Dict[str, Any]) -> bool:
+    fields = oracle_profile_fields(case)
+    profile_id = str(fields.get("oracle_profile_id") or "").strip()
+    if profile_id.startswith("unsupported."):
+        return False
+    if "oracle_profile_supported" in fields:
+        return bool(fields["oracle_profile_supported"])
+    return True
 
 
 def preserved_record(
@@ -610,6 +649,7 @@ def preserved_record(
     record.update(oracle_profile_fields(case))
     record.update(evidence_fields(hyp))
     record.update(hypothesis_context_fields(hyp))
+    record.update(semantic_fields(hyp))
     record.update(routing_fields(hyp))
     return record
 
@@ -626,17 +666,17 @@ def unsupported_oracle_failed_record(
         hyp,
         "UNSUPPORTED_ORACLE",
         (
-            "Stage D oracle cannot prove or disprove this route, and Stage C priority "
-            f"{priority} is not eligible for reportable preservation"
+            "Stage D oracle cannot prove or disprove this route, and the record does not satisfy "
+            f"reportable preservation policy for Stage C priority {priority}"
         ),
-        "review the Stage C hypothesis, improve the oracle profile, or rerun after priority is P0/P1",
+        "review the Stage C semantic contract, improve the oracle profile, or rerun after route-bound evidence is available",
     )
     record["payload_ref"] = runner_rel.as_posix()
     record["plan_ref"] = plan_rel.as_posix()
     record["target_type"] = "source_api"
     record["attack_type"] = case.get("attack_type")
     record["oracle_status"] = "unsupported"
-    record["preservation_policy"] = "preserve_only_p0_p1"
+    record["preservation_policy"] = "preserve_only_p0_p1_with_structured_semantic_contract"
     record["stage_c_verdict"] = stage_c_verdict_fields(hyp)
     record["observations"] = result.get("observations") or []
     record["runtime_trace"] = result.get("runtime_trace") or []
@@ -719,6 +759,8 @@ def write_source_api_plan(
         "entry_symbol": case.get("entry_symbol"),
         "oracle_profile_id": case.get("oracle_profile_id") or (case.get("oracle") or {}).get("profile_id"),
         "oracle_profile": case.get("oracle_profile"),
+        "semantic_family": hyp.get("semantic_family") or case.get("semantic_family"),
+        "semantic_contract": hyp.get("semantic_contract") or case.get("semantic_contract"),
         "api_sequence": case.get("api_sequence") or hyp.get("attack_path") or hyp.get("api_sequence"),
         "payload": case.get("payload"),
         "poc_plan": case.get("poc_plan"),
@@ -896,11 +938,12 @@ def run_one(hyp: Dict[str, Any], target: Dict[str, Any], out_dir: Path, dry_run:
         record.update(oracle_profile_fields(case))
         record.update(evidence_fields(hyp))
         record.update(hypothesis_context_fields(hyp))
+        record.update(semantic_fields(hyp))
         record.update(routing_fields(hyp))
         return record, None
 
     if result.get("status") == "unsupported":
-        if can_preserve_stage_c_verdict(hyp):
+        if can_preserve_stage_c_verdict(hyp) and case_has_supported_oracle_profile(case):
             return preserved_record(hyp, case, result, runner_rel, plan_rel), None
         return None, unsupported_oracle_failed_record(hyp, case, result, runner_rel, plan_rel)
 

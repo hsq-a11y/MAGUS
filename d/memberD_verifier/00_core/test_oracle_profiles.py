@@ -312,6 +312,43 @@ class OracleProfileSelectionTests(unittest.TestCase):
         self.assertFalse(profile["supported"])
         self.assertEqual(profile["confirm_patterns"], [])
 
+    def test_cwe319_semantic_contract_selects_cleartext_profile(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "semantic_family": "network.cleartext_sensitive_transmission",
+                "route": "recv -> CryptDecrypt -> LogonUserA -> CloseHandle",
+                "claim": "sensitive password may be transmitted in cleartext across a network boundary",
+                "cwe_candidates": ["CWE-319"],
+                "evidence_slice": "recv(sock, password, 100, 0); LogonUserA(user, domain, password, ...);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "network.cleartext_sensitive_transmission")
+        self.assertTrue(profile["supported"])
+        self.assertIn("LogonUserA", profile["matched_apis"])
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            profile["confirm_patterns"],
+        )
+        self.assertNotIn("MAGUS_ORACLE_SENSITIVE_PROOF name=LogonUserA", profile["confirm_patterns"])
+        self.assertNotEqual(profile["profile_id"], "memory.sensitive_without_lock")
+        self.assertNotEqual(profile["profile_id"], "crypto.missing_required_step")
+        self.assertNotEqual(profile["profile_id"], "resource.handle_lifecycle.win32")
+
+    def test_unknown_semantic_family_uses_evidence_collector(self):
+        profile = oracle_profiles.build_oracle_profile(
+            {
+                "semantic_family": "custom.future_semantics",
+                "route": "recv -> LogonUserA",
+                "claim": "future semantics with familiar APIs",
+                "evidence_slice": "LogonUserA(user, domain, password, ...);",
+            }
+        )
+
+        self.assertEqual(profile["profile_id"], "unsupported.semantic_evidence_collector")
+        self.assertFalse(profile["supported"])
+        self.assertEqual(profile["confirm_patterns"], [])
+
     def test_cwe_disambiguates_multi_semantic_api_families(self):
         profile = oracle_profiles.build_oracle_profile(
             {

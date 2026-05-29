@@ -58,6 +58,11 @@ def validate_report(row: Dict[str, Any]) -> List[str]:
         and row.get("risk_level") not in PRESERVED_REPORTABLE_RISK_LEVELS
     ):
         errors.append("preserved Stage C report record must have risk_level P0 or P1")
+    if row.get("verification_status") == "stage_c_preserved":
+        if row.get("semantic_family") in (None, "", []):
+            errors.append("preserved Stage C report record must include semantic_family")
+        if not isinstance(row.get("semantic_contract"), dict):
+            errors.append("preserved Stage C report record must include structured semantic_contract")
     return errors
 
 

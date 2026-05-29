@@ -1071,12 +1071,14 @@ int recv(SOCKET s, char *buf, int len, int flags)
         {
             wide_buf[i] = (wchar_t)(unsigned char)payload[i];
         }
+        sink_marker("recv", payload);
         return (int)(copy_len * sizeof(wchar_t));
     }
 
     payload_len = strlen(payload);
     copy_len = payload_len < (size_t)len ? payload_len : (size_t)len;
     memcpy(buf, payload, copy_len);
+    sink_marker("recv", payload);
     return (int)copy_len;
 }
 

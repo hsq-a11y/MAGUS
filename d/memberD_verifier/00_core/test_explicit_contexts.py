@@ -110,6 +110,33 @@ class ExplicitContextTests(unittest.TestCase):
         self.assertEqual(case["payload"]["runtime_inputs"][:4], ["11", "10", "15", "100"])
         self.assertIn("-1", case["payload"]["runtime_inputs"])
 
+    def test_cwe319_semantic_family_gets_cleartext_profile(self):
+        hyp = {
+            "project_id": "generic_project",
+            "sample_id": "s1",
+            "hypothesis_id": "h1",
+            "route": "recv -> CryptDecrypt -> LogonUserA -> CloseHandle",
+            "file": "src/auth.c",
+            "claim": "sensitive password may cross a network boundary in cleartext",
+            "cwe_candidates": ["CWE-319"],
+            "semantic_family": "network.cleartext_sensitive_transmission",
+            "semantic_contract": {
+                "family": "network.cleartext_sensitive_transmission",
+                "requires_route_bound_evidence": True,
+                "sensitivity_proof_apis": ["LogonUserA"],
+            },
+            "evidence_slice": "recv(sock, password, 100, 0); LogonUserA(user, domain, password, ...);",
+        }
+
+        case = target_gen.make_source_api_case(hyp, auto_fill=True)
+
+        self.assertEqual(case["attack_type"], "cleartext_sensitive_transmission")
+        self.assertEqual(case["oracle_profile_id"], "network.cleartext_sensitive_transmission")
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            case["oracle"]["semantic_failure_patterns"],
+        )
+
     def test_cwe126_out_of_bounds_read_gets_numeric_runtime_inputs(self):
         hyp = {
             "project_id": "juliet",

@@ -77,6 +77,54 @@ class JulietHelperOutputTests(unittest.TestCase):
             ["MAGUS_ORACLE_FLAW name=RpcImpersonateClient reason=forced_non_ok_return_not_propagated value="],
         )
 
+    def test_network_cleartext_marker_requires_selected_profile(self):
+        stdout = "\n".join(
+            [
+                "MAGUS_JULIET_SINK name=recv tainted=1 value=secret",
+                "MAGUS_JULIET_SINK name=LogonUserA tainted=1 value=secret",
+                "MAGUS_JULIET_FLAW name=LogonUserA reason=sensitive_password_not_virtually_locked value=secret",
+            ]
+        )
+
+        self.assertEqual(
+            self.runner.network_cleartext_semantic_markers(stdout, True, "memory.sensitive_without_lock"),
+            [],
+        )
+        markers = self.runner.network_cleartext_semantic_markers(
+            stdout,
+            True,
+            "network.cleartext_sensitive_transmission",
+        )
+        self.assertIn(
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            markers,
+        )
+        self.assertIn("MAGUS_ORACLE_SENSITIVE_PROOF name=LogonUserA", markers)
+
+    def test_network_cleartext_marker_reports_protection_instead_of_flaw_after_decrypt(self):
+        stdout = "\n".join(
+            [
+                "MAGUS_JULIET_SINK name=recv tainted=1 value=secret",
+                "MAGUS_JULIET_SINK name=CryptDecrypt tainted=0 value=",
+                "MAGUS_JULIET_SINK name=LogonUserA tainted=1 value=secret",
+            ]
+        )
+
+        markers = self.runner.network_cleartext_semantic_markers(
+            stdout,
+            True,
+            "network.cleartext_sensitive_transmission",
+        )
+
+        self.assertIn(
+            "MAGUS_ORACLE_PROTECTION name=CryptDecrypt reason=ciphertext_to_plaintext_before_sensitive_use",
+            markers,
+        )
+        self.assertNotIn(
+            "MAGUS_ORACLE_FLAW profile=network.cleartext_sensitive_transmission reason=cleartext_sensitive_transmission",
+            markers,
+        )
+
     def test_lifecycle_capability_markers_cover_fd_stdio_and_win32_profiles(self):
         env = {
             "MAGUS_JULIET_REPORT_FD_LEAKS": "1",

@@ -249,7 +249,6 @@ def stage_c_command(
     output_path: Path,
     time_limit_seconds: float | None,
     workers: int,
-    llm_usage_log: Path | None = None,
 ) -> list[str]:
     command = [
         sys.executable,
@@ -263,8 +262,6 @@ def stage_c_command(
     ]
     if time_limit_seconds is not None:
         command.extend(["--time-limit-seconds", str(time_limit_seconds)])
-    if llm_usage_log is not None:
-        command.extend(["--llm-usage-log", str(llm_usage_log)])
     return command
 
 
@@ -273,9 +270,8 @@ def run_stage_c(
     output_path: Path,
     time_limit_seconds: float | None,
     workers: int,
-    llm_usage_log: Path | None = None,
 ) -> None:
-    run_command(stage_c_command(candidates_path, output_path, time_limit_seconds, workers, llm_usage_log), STAGE_C_DIR)
+    run_command(stage_c_command(candidates_path, output_path, time_limit_seconds, workers), STAGE_C_DIR)
 
 
 def run_stage_d(contexts_path: Path | None = None) -> None:
@@ -346,7 +342,6 @@ def run_stage_c_with_streaming_d(
     output_path: Path,
     time_limit_seconds: float | None,
     workers: int,
-    llm_usage_log: Path | None,
     stage_d_output_dir: Path,
     report_root: Path,
     report_run_name: str,
@@ -357,7 +352,7 @@ def run_stage_c_with_streaming_d(
     output_path.write_text("", encoding="utf-8")
     with tempfile.TemporaryDirectory(prefix="magus-stage-c-") as temp_dir:
         done_file = Path(temp_dir) / "stage_c.done"
-        c_command = stage_c_command(candidates_path, output_path, time_limit_seconds, workers, llm_usage_log)
+        c_command = stage_c_command(candidates_path, output_path, time_limit_seconds, workers)
         d_command = [
             str(STAGE_D_PYTHON),
             "stream_from_C.py",
@@ -513,11 +508,6 @@ def main() -> None:
         default=DEFAULT_STAGE_C_WORKERS,
         help=f"Stage C 并发 worker 进程数，默认 {DEFAULT_STAGE_C_WORKERS}",
     )
-    parser_c.add_argument(
-        "--llm-usage-log",
-        default="",
-        help="可选 Stage C LLM usage/cache 诊断 JSONL；默认关闭",
-    )
     parser_d = subparsers.add_parser("d", help="运行 Stage D，并在 D 完成后生成最终报告")
     parser_d.add_argument(
         "--contexts",
@@ -571,11 +561,6 @@ def main() -> None:
         type=positive_int,
         default=DEFAULT_STAGE_C_WORKERS,
         help=f"Stage C 并发 worker 进程数，默认 {DEFAULT_STAGE_C_WORKERS}",
-    )
-    parser_abcd.add_argument(
-        "--c-llm-usage-log",
-        default="",
-        help="可选 Stage C LLM usage/cache 诊断 JSONL；默认关闭",
     )
     parser_abcd.add_argument(
         "--report-root",
@@ -640,7 +625,6 @@ def main() -> None:
             resolve_path(args.output),
             args.time_limit_seconds,
             args.workers,
-            resolve_path(args.llm_usage_log) if args.llm_usage_log.strip() else None,
         )
         return
 
@@ -687,7 +671,6 @@ def main() -> None:
             c_output,
             args.c_time_limit_seconds,
             args.c_workers,
-            resolve_path(args.c_llm_usage_log) if args.c_llm_usage_log.strip() else None,
             stage_d_output_dir,
             report_root,
             report_run_name,
