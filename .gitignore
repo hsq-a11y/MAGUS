@@ -1,0 +1,39 @@
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local agent/tool state
+.agents/
+.codex/
+.codex/.tmp/
+.codex/.tmp/plugins/
+
+# Stage A generated artifacts and copied input repositories
+/srcs_*
+a/out/*
+!a/out/.gitkeep
+a/out.zip
+a/input/secvuleval/src/
+a/input/SecVulEval/
+a/ /home/
+a/analyzer/llvm-api-analyzer
+a/cmd/__pycache__/
+
+# Stage B generated artifacts
+b/b_output*
+b/__pycache__/
+
+c/out/
+c/__pycache__/
+
+# Stage D local environment
+d/memberD_verifier/.venv/
+d/memberD_verifier/02_run_with_C/.stage_d_output.lock/
+d/memberD_verifier/02_run_with_C/output/*
+d/memberD_verifier/02_run_with_C/targets.auto.json
+d/memberD_verifier/02_run_with_C/targets.executable.json
+d/memberD_verifier/02_run_with_C/targets.cwe*.auto.json
+d/memberD_verifier/02_run_with_C/targets.cwe*.executable.json
+
+test/out/*
