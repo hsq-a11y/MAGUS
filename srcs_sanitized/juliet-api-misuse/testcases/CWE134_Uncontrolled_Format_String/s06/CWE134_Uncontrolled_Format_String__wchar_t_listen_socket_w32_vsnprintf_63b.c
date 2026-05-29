@@ -1,0 +1,111 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE134_Uncontrolled_Format_String__wchar_t_listen_socket_w32_vsnprintf_63b.c
+Label Definition File: CWE134_Uncontrolled_Format_String.vasinks.label.xml
+Template File: sources-vasinks-63b.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 134 Uncontrolled Format String
+ * Case0Source: listen_socket Read data using a listen socket (server side)
+ * Case1Source: Copy a fixed string into data
+ * Sinks: w32_vsnprintf
+ *    Case1Sink: _vsnwprintf with a format string
+ *    Case0Sink : _vsnwprintf without a format string
+ * Flow Variant: 63 Data flow: pointer to data passed from one function to another in different source files
+ *
+ * */
+
+#include <stdarg.h>
+#include "std_testcase.h"
+
+#ifndef _WIN32
+#include <wchar.h>
+#endif
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#include <direct.h>
+#pragma comment(lib, "ws2_32") /* include ws2_32.lib when linking */
+#define CLOSE_SOCKET closesocket
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define CLOSE_SOCKET close
+#define SOCKET int
+#endif
+
+#define TCP_PORT 27015
+#define LISTEN_BACKLOG 5
+
+#ifndef OMITCASE0
+
+static void case0VaSink(wchar_t * data, ...)
+{
+    {
+        wchar_t dest[100] = L"";
+        va_list args;
+        va_start(args, data);
+        /* NOTE: Do not specify the format allowing a possible format string vulnerability */
+        _vsnwprintf(dest, 100-1, data, args);
+        va_end(args);
+        printWLine(dest);
+    }
+}
+
+void CWE134_Uncontrolled_Format_String__wchar_t_listen_socket_w32_vsnprintf_63b_case0Sink(wchar_t * * dataPtr)
+{
+    wchar_t * data = *dataPtr;
+    case0VaSink(data, data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+static void case1V1VaSink(wchar_t * data, ...)
+{
+    {
+        wchar_t dest[100] = L"";
+        va_list args;
+        va_start(args, data);
+        /* NOTE: Do not specify the format allowing a possible format string vulnerability */
+        _vsnwprintf(dest, 100-1, data, args);
+        va_end(args);
+        printWLine(dest);
+    }
+}
+
+void CWE134_Uncontrolled_Format_String__wchar_t_listen_socket_w32_vsnprintf_63b_case1V1Sink(wchar_t * * dataPtr)
+{
+    wchar_t * data = *dataPtr;
+    case1V1VaSink(data, data);
+}
+
+/* case1V2 uses the Case0Source with the Case1Sink */
+static void case1V2VaSink(wchar_t * data, ...)
+{
+    {
+        wchar_t dest[100] = L"";
+        va_list args;
+        va_start(args, data);
+        /* ALT: Specify the format disallowing a format string vulnerability */
+        _vsnwprintf(dest, 100-1, L"%s", args);
+        va_end(args);
+        printWLine(dest);
+    }
+}
+
+void CWE134_Uncontrolled_Format_String__wchar_t_listen_socket_w32_vsnprintf_63b_case1V2Sink(wchar_t * * dataPtr)
+{
+    wchar_t * data = *dataPtr;
+    case1V2VaSink(data, data);
+}
+
+#endif /* OMITCASE1 */

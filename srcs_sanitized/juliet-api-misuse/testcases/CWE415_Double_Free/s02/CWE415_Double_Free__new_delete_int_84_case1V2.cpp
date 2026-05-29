@@ -1,0 +1,39 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE415_Double_Free__new_delete_int_84_case1V2.cpp
+Label Definition File: CWE415_Double_Free__new_delete.label.xml
+Template File: sources-sinks-84_case1V2.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 415 Double Free
+ * Case0Source:  Allocate data using new and Deallocae data using delete
+ * Case1Source: Allocate data using new
+ * Sinks:
+ *    Case1Sink: do nothing
+ *    Case0Sink : Deallocate data using delete
+ * Flow Variant: 84 Data flow: data passed to class constructor and destructor by declaring the class object on the heap and deleting it after use
+ *
+ * */
+#ifndef OMITCASE1
+
+#include "std_testcase.h"
+#include "CWE415_Double_Free__new_delete_int_84.h"
+
+namespace CWE415_Double_Free__new_delete_int_84
+{
+CWE415_Double_Free__new_delete_int_84_case1V2::CWE415_Double_Free__new_delete_int_84_case1V2(int * dataCopy)
+{
+    data = dataCopy;
+    data = new int;
+    /* NOTE: delete data in the source - the case0 sink deletes data as well */
+    delete data;
+}
+
+CWE415_Double_Free__new_delete_int_84_case1V2::~CWE415_Double_Free__new_delete_int_84_case1V2()
+{
+    /* do nothing */
+    /* ALT: Don't attempt to delete the memory */
+    ; /* empty statement needed for some flow variants */
+}
+}
+#endif /* OMITCASE1 */

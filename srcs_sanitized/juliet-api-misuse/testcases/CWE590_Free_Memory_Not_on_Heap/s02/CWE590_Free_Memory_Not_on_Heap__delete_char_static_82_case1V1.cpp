@@ -1,0 +1,32 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE590_Free_Memory_Not_on_Heap__delete_char_static_82_case1V1.cpp
+Label Definition File: CWE590_Free_Memory_Not_on_Heap__delete.nonpointer.label.xml
+Template File: sources-sink-82_case1V1.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 590 Free Memory Not on Heap
+ * Case0Source: static Data buffer is declared static on the stack
+ * Case1Source: Allocate memory on the heap
+ * Sinks:
+ *    Case0Sink : Print then free data
+ * Flow Variant: 82 Data flow: data passed in a parameter to a virtual method called via a pointer
+ *
+ * */
+#ifndef OMITCASE1
+
+#include "std_testcase.h"
+#include "CWE590_Free_Memory_Not_on_Heap__delete_char_static_82.h"
+
+namespace CWE590_Free_Memory_Not_on_Heap__delete_char_static_82
+{
+
+void CWE590_Free_Memory_Not_on_Heap__delete_char_static_82_case1V1::action(char * data)
+{
+    printHexCharLine(*data);
+    /* NOTE: Possibly deallocating memory allocated on the stack */
+    delete data;
+}
+
+}
+#endif /* OMITCASE1 */

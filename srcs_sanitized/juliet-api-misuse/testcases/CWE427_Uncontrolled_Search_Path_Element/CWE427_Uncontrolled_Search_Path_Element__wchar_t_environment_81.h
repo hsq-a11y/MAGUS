@@ -1,0 +1,58 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81.h
+Label Definition File: CWE427_Uncontrolled_Search_Path_Element.label.xml
+Template File: sources-sink-81.tmpl.h
+*/
+/*
+ * @description
+ * CWE: 427 Uncontrolled Search Path Element
+ * Case0Source: environment Read input from an environment variable
+ * Case1Source: Use a hardcoded path
+ * Sinks:
+ *    Case0Sink : Set the environment variable
+ * Flow Variant: 81 Data flow: data passed in a parameter to an virtual method called via a reference
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+#ifdef _WIN32
+#define NEW_PATH L"%SystemRoot%\\system32"
+#define PUTENV _wputenv
+#else
+#define NEW_PATH L"/bin"
+#define PUTENV putenv
+#endif
+
+namespace CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81
+{
+
+class CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81_base
+{
+public:
+    /* pure virtual function */
+    virtual void action(wchar_t * data) const = 0;
+};
+
+#ifndef OMITCASE0
+
+class CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81_case0 : public CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81_base
+{
+public:
+    void action(wchar_t * data) const;
+};
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+class CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81_case1V1 : public CWE427_Uncontrolled_Search_Path_Element__wchar_t_environment_81_base
+{
+public:
+    void action(wchar_t * data) const;
+};
+
+#endif /* OMITCASE1 */
+
+}

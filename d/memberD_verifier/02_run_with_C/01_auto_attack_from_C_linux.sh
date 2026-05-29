@@ -15,6 +15,26 @@ TARGET_FILE="$TARGET_AUTO_FILE"
 LOCK_DIR="$FLOW/.stage_d_output.lock"
 CONTEXT_ARG="${1:-${D_CONTEXTS:-}}"
 
+cleanup_targets() {
+  local removed=0
+  local target
+  shopt -s nullglob
+  for target in \
+    "$FLOW"/targets.auto.json \
+    "$FLOW"/targets.executable.json \
+    "$FLOW"/targets.cwe*.auto.json \
+    "$FLOW"/targets.cwe*.executable.json; do
+    if [[ -f "$target" || -L "$target" ]]; then
+      rm -f -- "$target"
+      removed=$((removed + 1))
+    fi
+  done
+  shopt -u nullglob
+  if (( removed > 0 )); then
+    echo "[D] Removed $removed transient target file(s)."
+  fi
+}
+
 if [[ -n "$CONTEXT_ARG" ]]; then
   CONTEXT_FILE="$CONTEXT_ARG"
 fi
@@ -66,4 +86,5 @@ if [[ -n "${REPORT_RUN_NAME:-}" ]]; then
   REPORT_COMMAND+=(--run-name "$REPORT_RUN_NAME")
 fi
 "${REPORT_COMMAND[@]}"
+cleanup_targets
 echo "[OK] C workflow finished."

@@ -1,0 +1,42 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83_case0.cpp
+Label Definition File: CWE122_Heap_Based_Buffer_Overflow__c_src.label.xml
+Template File: sources-sink-83_case0.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 122 Heap Based Buffer Overflow
+ * Case0Source:  Initialize data as a large string
+ * Case1Source: Initialize data as a small string
+ * Sinks: cpy
+ *    Case0Sink : Copy data to string using wcscpy
+ * Flow Variant: 83 Data flow: data passed to class constructor and destructor by declaring the class object on the stack
+ *
+ * */
+#ifndef OMITCASE0
+
+#include "std_testcase.h"
+#include "CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83.h"
+
+namespace CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83
+{
+CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83_case0::CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83_case0(wchar_t * dataCopy)
+{
+    data = dataCopy;
+    /* NOTE: Initialize data as a large buffer that is larger than the small buffer used in the sink */
+    wmemset(data, L'A', 100-1); /* fill with L'A's */
+    data[100-1] = L'\0'; /* null terminate */
+}
+
+CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83_case0::~CWE122_Heap_Based_Buffer_Overflow__c_src_wchar_t_cpy_83_case0()
+{
+    {
+        wchar_t dest[50] = L"";
+        /* NOTE: Possible buffer overflow if data is larger than dest */
+        wcscpy(dest, data);
+        printWLine(data);
+        free(data);
+    }
+}
+}
+#endif /* OMITCASE0 */

@@ -29,6 +29,12 @@ DEFAULT_SOURCE_ROOT = REPO_ROOT / "srcs_sanitized"
 DEFAULT_STAGE_B_OUTPUT_DIR = STAGE_B_DIR / "b_output"
 DEFAULT_STAGE_C_OUTPUT = STAGE_C_DIR / "out/hypotheses.jsonl"
 DEFAULT_STAGE_C_WORKERS = 20
+STAGE_D_TRANSIENT_TARGET_PATTERNS = (
+    "targets.auto.json",
+    "targets.executable.json",
+    "targets.cwe*.auto.json",
+    "targets.cwe*.executable.json",
+)
 REPORT_RUN_NAME_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 
 
@@ -138,6 +144,57 @@ def run_command(command: list[str], cwd: Path) -> None:
     completed = subprocess.run(command, cwd=cwd)
     if completed.returncode != 0:
         raise SystemExit(completed.returncode)
+
+
+def stage_d_transient_target_files(flow_dir: Path = STAGE_D_RUN_DIR) -> list[Path]:
+    paths: list[Path] = []
+    seen: set[Path] = set()
+    for pattern in STAGE_D_TRANSIENT_TARGET_PATTERNS:
+        for path in sorted(flow_dir.glob(pattern)):
+            if path in seen:
+                continue
+            seen.add(path)
+            if path.is_file() or path.is_symlink():
+                paths.append(path)
+    return paths
+
+
+def file_signature(path: Path) -> tuple[int, int, int, int] | None:
+    try:
+        stat_result = path.stat()
+    except FileNotFoundError:
+        return None
+    return (stat_result.st_dev, stat_result.st_ino, stat_result.st_mtime_ns, stat_result.st_size)
+
+
+def snapshot_stage_d_targets(flow_dir: Path = STAGE_D_RUN_DIR) -> dict[Path, tuple[int, int, int, int]]:
+    snapshots: dict[Path, tuple[int, int, int, int]] = {}
+    for path in stage_d_transient_target_files(flow_dir):
+        signature = file_signature(path)
+        if signature is not None:
+            snapshots[path] = signature
+    return snapshots
+
+
+def cleanup_stage_d_targets(
+    snapshots: dict[Path, tuple[int, int, int, int]] | None = None,
+    flow_dir: Path = STAGE_D_RUN_DIR,
+) -> None:
+    removed: list[Path] = []
+    skipped = 0
+    for path in stage_d_transient_target_files(flow_dir):
+        signature = file_signature(path)
+        if signature is None:
+            continue
+        if snapshots is not None and snapshots.get(path) != signature:
+            skipped += 1
+            continue
+        path.unlink()
+        removed.append(path)
+    if removed:
+        print(f"[pipeline] removed {len(removed)} transient Stage D target file(s)", flush=True)
+    if skipped:
+        print(f"[pipeline] skipped {skipped} changed Stage D target file(s)", flush=True)
 
 
 def build_analyzer() -> None:
@@ -407,7 +464,9 @@ def run_stage_c_with_streaming_d(
             raise SystemExit(c_returncode)
         if d_returncode != 0:
             raise SystemExit(d_returncode)
+        target_snapshots = snapshot_stage_d_targets()
         run_named_report(stage_d_output_dir, report_root, report_run_name)
+        cleanup_stage_d_targets(target_snapshots)
 
 
 def add_stage_a_args(parser: argparse.ArgumentParser, input_flag: str, output_flag: str) -> None:

@@ -1,0 +1,126 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE124_Buffer_Underwrite__new_char_ncpy_41.cpp
+Label Definition File: CWE124_Buffer_Underwrite__new.label.xml
+Template File: sources-sink-41.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 124 Buffer Underwrite
+ * Case0Source:  Set data pointer to before the allocated memory buffer
+ * Case1Source: Set data pointer to the allocated memory buffer
+ * Sink: ncpy
+ *    Case0Sink : Copy string to data using strncpy
+ * Flow Variant: 41 Data flow: data passed as an argument from one function to another in the same source file
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+
+namespace CWE124_Buffer_Underwrite__new_char_ncpy_41
+{
+
+#ifndef OMITCASE0
+
+void case0Sink(char * data)
+{
+    {
+        char source[100];
+        memset(source, 'C', 100-1); /* fill with 'C's */
+        source[100-1] = '\0'; /* null terminate */
+        /* NOTE: Possibly copying data to memory before the destination buffer */
+        strncpy(data, source, 100-1);
+        /* Ensure the destination buffer is null terminated */
+        data[100-1] = '\0';
+        printLine(data);
+        /* INCIDENTAL CWE-401: Memory Leak - data may not point to location
+         * returned by new [] so can't safely call delete [] on it */
+    }
+}
+
+void case0()
+{
+    char * data;
+    data = NULL;
+    {
+        char * dataBuffer = new char[100];
+        memset(dataBuffer, 'A', 100-1);
+        dataBuffer[100-1] = '\0';
+        /* NOTE: Set data pointer to before the allocated memory buffer */
+        data = dataBuffer - 8;
+    }
+    case0Sink(data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+void case1V1Sink(char * data)
+{
+    {
+        char source[100];
+        memset(source, 'C', 100-1); /* fill with 'C's */
+        source[100-1] = '\0'; /* null terminate */
+        /* NOTE: Possibly copying data to memory before the destination buffer */
+        strncpy(data, source, 100-1);
+        /* Ensure the destination buffer is null terminated */
+        data[100-1] = '\0';
+        printLine(data);
+        /* INCIDENTAL CWE-401: Memory Leak - data may not point to location
+         * returned by new [] so can't safely call delete [] on it */
+    }
+}
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+static void case1V1()
+{
+    char * data;
+    data = NULL;
+    {
+        char * dataBuffer = new char[100];
+        memset(dataBuffer, 'A', 100-1);
+        dataBuffer[100-1] = '\0';
+        /* ALT: Set data pointer to the allocated memory buffer */
+        data = dataBuffer;
+    }
+    case1V1Sink(data);
+}
+
+void case1()
+{
+    case1V1();
+}
+
+#endif /* OMITCASE1 */
+
+} /* close namespace */
+
+/* Below is the main(). It is only used when building this testcase on
+   its own for testing or for building a binary to use in testing binary
+   analysis tools. It is not used when compiling all the testcases as one
+   application, which is how source code analysis tools are tested. */
+
+#ifdef INCLUDEMAIN
+
+using namespace CWE124_Buffer_Underwrite__new_char_ncpy_41; /* so that we can use case1 and case0 easily */
+
+int main(int argc, char * argv[])
+{
+    /* seed randomness */
+    srand( (unsigned)time(NULL) );
+#ifndef OMITCASE1
+    printLine("Calling case1()...");
+    case1();
+    printLine("Finished case1()");
+#endif /* OMITCASE1 */
+#ifndef OMITCASE0
+    printLine("Calling case0()...");
+    case0();
+    printLine("Finished case0()");
+#endif /* OMITCASE0 */
+    return 0;
+}
+
+#endif

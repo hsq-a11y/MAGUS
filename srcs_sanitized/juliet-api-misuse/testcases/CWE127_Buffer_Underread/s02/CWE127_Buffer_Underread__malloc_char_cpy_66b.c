@@ -1,0 +1,59 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE127_Buffer_Underread__malloc_char_cpy_66b.c
+Label Definition File: CWE127_Buffer_Underread__malloc.label.xml
+Template File: sources-sink-66b.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 127 Buffer Under-read
+ * Case0Source:  Set data pointer to before the allocated memory buffer
+ * Case1Source: Set data pointer to the allocated memory buffer
+ * Sinks: cpy
+ *    Case0Sink : Copy data to string using strcpy
+ * Flow Variant: 66 Data flow: data passed in an array from one function to another in different source files
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+
+#ifndef OMITCASE0
+
+void CWE127_Buffer_Underread__malloc_char_cpy_66b_case0Sink(char * dataArray[])
+{
+    /* copy data out of dataArray */
+    char * data = dataArray[2];
+    {
+        char dest[100*2];
+        memset(dest, 'C', 100*2-1); /* fill with 'C's */
+        dest[100*2-1] = '\0'; /* null terminate */
+        /* NOTE: Possibly copy from a memory location located before the source buffer */
+        strcpy(dest, data);
+        printLine(dest);
+        /* INCIDENTAL CWE-401: Memory Leak - data may not point to location
+         * returned by malloc() so can't safely call free() on it */
+    }
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+void CWE127_Buffer_Underread__malloc_char_cpy_66b_case1V1Sink(char * dataArray[])
+{
+    char * data = dataArray[2];
+    {
+        char dest[100*2];
+        memset(dest, 'C', 100*2-1); /* fill with 'C's */
+        dest[100*2-1] = '\0'; /* null terminate */
+        /* NOTE: Possibly copy from a memory location located before the source buffer */
+        strcpy(dest, data);
+        printLine(dest);
+        /* INCIDENTAL CWE-401: Memory Leak - data may not point to location
+         * returned by malloc() so can't safely call free() on it */
+    }
+}
+
+#endif /* OMITCASE1 */

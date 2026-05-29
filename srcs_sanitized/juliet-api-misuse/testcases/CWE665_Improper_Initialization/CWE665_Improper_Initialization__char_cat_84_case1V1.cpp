@@ -1,0 +1,42 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE665_Improper_Initialization__char_cat_84_case1V1.cpp
+Label Definition File: CWE665_Improper_Initialization.label.xml
+Template File: sources-sink-84_case1V1.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 665 Improper Initialization
+ * Case0Source:  Do not initialize data properly
+ * Case1Source: Initialize data
+ * Sinks: cat
+ *    Case0Sink : Copy string to data using strcat
+ * Flow Variant: 84 Data flow: data passed to class constructor and destructor by declaring the class object on the heap and deleting it after use
+ *
+ * */
+#ifndef OMITCASE1
+
+#include "std_testcase.h"
+#include "CWE665_Improper_Initialization__char_cat_84.h"
+
+namespace CWE665_Improper_Initialization__char_cat_84
+{
+CWE665_Improper_Initialization__char_cat_84_case1V1::CWE665_Improper_Initialization__char_cat_84_case1V1(char * dataCopy)
+{
+    data = dataCopy;
+    /* ALT: Properly initialize data */
+    data[0] = '\0'; /* null terminate */
+}
+
+CWE665_Improper_Initialization__char_cat_84_case1V1::~CWE665_Improper_Initialization__char_cat_84_case1V1()
+{
+    {
+        char source[100];
+        memset(source, 'C', 100-1); /* fill with 'C's */
+        source[100-1] = '\0'; /* null terminate */
+        /* NOTE: If data is not initialized properly, strcat() may not function correctly */
+        strcat(data, source);
+        printLine(data);
+    }
+}
+}
+#endif /* OMITCASE1 */

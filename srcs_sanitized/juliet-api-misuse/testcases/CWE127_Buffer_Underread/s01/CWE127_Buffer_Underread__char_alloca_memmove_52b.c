@@ -1,0 +1,46 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE127_Buffer_Underread__char_alloca_memmove_52b.c
+Label Definition File: CWE127_Buffer_Underread.stack.label.xml
+Template File: sources-sink-52b.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 127 Buffer Under-read
+ * Case0Source:  Set data pointer to before the allocated memory buffer
+ * Case1Source: Set data pointer to the allocated memory buffer
+ * Sink: memmove
+ *    Case0Sink : Copy data to string using memmove
+ * Flow Variant: 52 Data flow: data passed as an argument from one function to another to another in three different source files
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+
+/* all the sinks are the same, we just want to know where the hit originated if a tool flags one */
+
+#ifndef OMITCASE0
+
+/* case0 function declaration */
+void CWE127_Buffer_Underread__char_alloca_memmove_52c_case0Sink(char * data);
+
+void CWE127_Buffer_Underread__char_alloca_memmove_52b_case0Sink(char * data)
+{
+    CWE127_Buffer_Underread__char_alloca_memmove_52c_case0Sink(data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1 function declaration */
+void CWE127_Buffer_Underread__char_alloca_memmove_52c_case1V1Sink(char * data);
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+void CWE127_Buffer_Underread__char_alloca_memmove_52b_case1V1Sink(char * data)
+{
+    CWE127_Buffer_Underread__char_alloca_memmove_52c_case1V1Sink(data);
+}
+
+#endif /* OMITCASE1 */

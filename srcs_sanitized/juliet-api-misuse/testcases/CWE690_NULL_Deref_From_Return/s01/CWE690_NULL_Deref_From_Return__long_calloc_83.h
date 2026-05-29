@@ -1,0 +1,52 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE690_NULL_Deref_From_Return__long_calloc_83.h
+Label Definition File: CWE690_NULL_Deref_From_Return.free.label.xml
+Template File: source-sinks-83.tmpl.h
+*/
+/*
+ * @description
+ * CWE: 690 Unchecked Return Value To NULL Pointer
+ * Case0Source: calloc Allocate data using calloc()
+ * Sinks:
+ *    Case1Sink: Check to see if the data allocation failed and if not, use data
+ *    Case0Sink : Don't check for NULL and use data
+ * Flow Variant: 83 Data flow: data passed to class constructor and destructor by declaring the class object on the stack
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+
+namespace CWE690_NULL_Deref_From_Return__long_calloc_83
+{
+
+#ifndef OMITCASE0
+
+class CWE690_NULL_Deref_From_Return__long_calloc_83_case0
+{
+public:
+    CWE690_NULL_Deref_From_Return__long_calloc_83_case0(long * dataCopy);
+    ~CWE690_NULL_Deref_From_Return__long_calloc_83_case0();
+
+private:
+    long * data;
+};
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+class CWE690_NULL_Deref_From_Return__long_calloc_83_case1V2
+{
+public:
+    CWE690_NULL_Deref_From_Return__long_calloc_83_case1V2(long * dataCopy);
+    ~CWE690_NULL_Deref_From_Return__long_calloc_83_case1V2();
+
+private:
+    long * data;
+};
+
+#endif /* OMITCASE1 */
+
+}

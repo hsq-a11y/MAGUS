@@ -1,0 +1,119 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE122_Heap_Based_Buffer_Overflow__c_CWE805_int64_t_loop_32.c
+Label Definition File: CWE122_Heap_Based_Buffer_Overflow__c_CWE805.label.xml
+Template File: sources-sink-32.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 122 Heap Based Buffer Overflow
+ * Case0Source:  Allocate using malloc() and set data pointer to a small buffer
+ * Case1Source: Allocate using malloc() and set data pointer to a large buffer
+ * Sink: loop
+ *    Case0Sink : Copy int64_t array to data using a loop
+ * Flow Variant: 32 Data flow using two pointers to the same value within the same function
+ *
+ * */
+
+#include "std_testcase.h"
+
+#ifndef OMITCASE0
+
+void CWE122_Heap_Based_Buffer_Overflow__c_CWE805_int64_t_loop_32_case0()
+{
+    int64_t * data;
+    int64_t * *dataPtr1 = &data;
+    int64_t * *dataPtr2 = &data;
+    data = NULL;
+    {
+        int64_t * data = *dataPtr1;
+        /* NOTE: Allocate and point data to a small buffer that is smaller than the large buffer used in the sinks */
+        data = (int64_t *)malloc(50*sizeof(int64_t));
+        if (data == NULL) {exit(-1);}
+        *dataPtr1 = data;
+    }
+    {
+        int64_t * data = *dataPtr2;
+        {
+            int64_t source[100] = {0}; /* fill with 0's */
+            {
+                size_t i;
+                /* NOTE: Possible buffer overflow if data < 100 */
+                for (i = 0; i < 100; i++)
+                {
+                    data[i] = source[i];
+                }
+                printLongLongLine(data[0]);
+                free(data);
+            }
+        }
+    }
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1() uses the Case1Source with the Case0Sink */
+static void case1V1()
+{
+    int64_t * data;
+    int64_t * *dataPtr1 = &data;
+    int64_t * *dataPtr2 = &data;
+    data = NULL;
+    {
+        int64_t * data = *dataPtr1;
+        /* ALT: Allocate and point data to a large buffer that is at least as large as the large buffer used in the sink */
+        data = (int64_t *)malloc(100*sizeof(int64_t));
+        if (data == NULL) {exit(-1);}
+        *dataPtr1 = data;
+    }
+    {
+        int64_t * data = *dataPtr2;
+        {
+            int64_t source[100] = {0}; /* fill with 0's */
+            {
+                size_t i;
+                /* NOTE: Possible buffer overflow if data < 100 */
+                for (i = 0; i < 100; i++)
+                {
+                    data[i] = source[i];
+                }
+                printLongLongLine(data[0]);
+                free(data);
+            }
+        }
+    }
+}
+
+void CWE122_Heap_Based_Buffer_Overflow__c_CWE805_int64_t_loop_32_case1()
+{
+    case1V1();
+}
+
+#endif /* OMITCASE1 */
+
+/* Below is the main(). It is only used when building this testcase on
+ * its own for testing or for building a binary to use in testing binary
+ * analysis tools. It is not used when compiling all the testcases as one
+ * application, which is how source code analysis tools are tested.
+ */
+#ifdef INCLUDEMAIN
+
+int main(int argc, char * argv[])
+{
+    /* seed randomness */
+    srand( (unsigned)time(NULL) );
+#ifndef OMITCASE1
+    printLine("Calling case1()...");
+    CWE122_Heap_Based_Buffer_Overflow__c_CWE805_int64_t_loop_32_case1();
+    printLine("Finished case1()");
+#endif /* OMITCASE1 */
+#ifndef OMITCASE0
+    printLine("Calling case0()...");
+    CWE122_Heap_Based_Buffer_Overflow__c_CWE805_int64_t_loop_32_case0();
+    printLine("Finished case0()");
+#endif /* OMITCASE0 */
+    return 0;
+}
+
+#endif

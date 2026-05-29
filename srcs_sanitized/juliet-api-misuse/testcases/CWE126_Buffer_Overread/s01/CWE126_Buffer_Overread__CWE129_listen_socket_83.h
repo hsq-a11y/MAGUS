@@ -1,0 +1,61 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE126_Buffer_Overread__CWE129_listen_socket_83.h
+Label Definition File: CWE126_Buffer_Overread__CWE129.label.xml
+Template File: sources-sinks-83.tmpl.h
+*/
+/*
+ * @description
+ * CWE: 126 Buffer Overread
+ * Case0Source: listen_socket Read data using a listen socket (server side)
+ * Case1Source: Larger than zero but less than 10
+ * Sinks:
+ *    Case1Sink: Ensure the array index is valid
+ *    Case0Sink : Improperly check the array index by not checking the upper bound
+ * Flow Variant: 83 Data flow: data passed to class constructor and destructor by declaring the class object on the stack
+ *
+ * */
+
+#include "std_testcase.h"
+
+namespace CWE126_Buffer_Overread__CWE129_listen_socket_83
+{
+
+#ifndef OMITCASE0
+
+class CWE126_Buffer_Overread__CWE129_listen_socket_83_case0
+{
+public:
+    CWE126_Buffer_Overread__CWE129_listen_socket_83_case0(int dataCopy);
+    ~CWE126_Buffer_Overread__CWE129_listen_socket_83_case0();
+
+private:
+    int data;
+};
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+class CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V1
+{
+public:
+    CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V1(int dataCopy);
+    ~CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V1();
+
+private:
+    int data;
+};
+
+class CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V2
+{
+public:
+    CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V2(int dataCopy);
+    ~CWE126_Buffer_Overread__CWE129_listen_socket_83_case1V2();
+
+private:
+    int data;
+};
+
+#endif /* OMITCASE1 */
+
+}

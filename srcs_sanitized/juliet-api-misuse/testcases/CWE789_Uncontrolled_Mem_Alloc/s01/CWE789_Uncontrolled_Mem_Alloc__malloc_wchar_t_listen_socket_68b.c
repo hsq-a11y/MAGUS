@@ -1,0 +1,132 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68b.c
+Label Definition File: CWE789_Uncontrolled_Mem_Alloc__malloc.label.xml
+Template File: sources-sinks-68b.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 789 Uncontrolled Memory Allocation
+ * Case0Source: listen_socket Read data using a listen socket (server side)
+ * Case1Source: Small number greater than zero
+ * Sinks:
+ *    Case1Sink: Allocate memory with malloc() and check the size of the memory to be allocated
+ *    Case0Sink : Allocate memory with malloc(), but incorrectly check the size of the memory to be allocated
+ * Flow Variant: 68 Data flow: data passed as a global variable from one function to another in different source files
+ *
+ * */
+
+#include "std_testcase.h"
+
+#ifndef _WIN32
+#include <wchar.h>
+#endif
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#include <direct.h>
+#pragma comment(lib, "ws2_32") /* include ws2_32.lib when linking */
+#define CLOSE_SOCKET closesocket
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define CLOSE_SOCKET close
+#define SOCKET int
+#endif
+
+#define TCP_PORT 27015
+#define LISTEN_BACKLOG 5
+#define CHAR_ARRAY_SIZE (3 * sizeof(data) + 2)
+
+#define HELLO_STRING L"hello"
+
+extern size_t CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case0Data;
+extern size_t CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case1V1Data;
+extern size_t CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case1V2Data;
+
+#ifndef OMITCASE0
+
+void CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68b_case0Sink()
+{
+    size_t data = CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case0Data;
+    {
+        wchar_t * myString;
+        /* NOTE: No MAXIMUM limitation for memory allocation, but ensure data is large enough
+         * for the wcscpy() function to not cause a buffer overflow */
+        /* INCIDENTAL NOTE: The source could cause a type overrun in data or in the memory allocation */
+        if (data > wcslen(HELLO_STRING))
+        {
+            myString = (wchar_t *)malloc(data*sizeof(wchar_t));
+            if (myString == NULL) {exit(-1);}
+            /* Copy a small string into myString */
+            wcscpy(myString, HELLO_STRING);
+            printWLine(myString);
+            free(myString);
+        }
+        else
+        {
+            printLine("Input is less than the length of the source string");
+        }
+    }
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+void CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68b_case1V1Sink()
+{
+    size_t data = CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case1V1Data;
+    {
+        wchar_t * myString;
+        /* NOTE: No MAXIMUM limitation for memory allocation, but ensure data is large enough
+         * for the wcscpy() function to not cause a buffer overflow */
+        /* INCIDENTAL NOTE: The source could cause a type overrun in data or in the memory allocation */
+        if (data > wcslen(HELLO_STRING))
+        {
+            myString = (wchar_t *)malloc(data*sizeof(wchar_t));
+            if (myString == NULL) {exit(-1);}
+            /* Copy a small string into myString */
+            wcscpy(myString, HELLO_STRING);
+            printWLine(myString);
+            free(myString);
+        }
+        else
+        {
+            printLine("Input is less than the length of the source string");
+        }
+    }
+}
+
+/* case1V2 uses the Case0Source with the Case1Sink */
+void CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68b_case1V2Sink()
+{
+    size_t data = CWE789_Uncontrolled_Mem_Alloc__malloc_wchar_t_listen_socket_68_case1V2Data;
+    {
+        wchar_t * myString;
+        /* ALT: Include a MAXIMUM limitation for memory allocation and a check to ensure data is large enough
+         * for the wcscpy() function to not cause a buffer overflow */
+        /* INCIDENTAL NOTE: The source could cause a type overrun in data or in the memory allocation */
+        if (data > wcslen(HELLO_STRING) && data < 100)
+        {
+            myString = (wchar_t *)malloc(data*sizeof(wchar_t));
+            if (myString == NULL) {exit(-1);}
+            /* Copy a small string into myString */
+            wcscpy(myString, HELLO_STRING);
+            printWLine(myString);
+            free(myString);
+        }
+        else
+        {
+            printLine("Input is less than the length of the source string or too large");
+        }
+    }
+}
+
+#endif /* OMITCASE1 */

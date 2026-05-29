@@ -1,0 +1,249 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE134_Uncontrolled_Format_String__char_console_vfprintf_21.c
+Label Definition File: CWE134_Uncontrolled_Format_String.vasinks.label.xml
+Template File: sources-vasinks-21.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 134 Uncontrolled Format String
+ * Case0Source: console Read input from the console
+ * Case1Source: Copy a fixed string into data
+ * Sinks: vfprintf
+ *    Case1Sink: vfprintf with a format string
+ *    Case0Sink : vfprintf without a format string
+ * Flow Variant: 21 Control flow: Flow controlled by value of a static global variable. All functions contained in one file.
+ *
+ * */
+
+#include <stdarg.h>
+#include "std_testcase.h"
+
+#ifndef _WIN32
+#include <wchar.h>
+#endif
+
+#ifndef OMITCASE0
+
+/* The static variable below is used to drive control flow in the sink function */
+static int case0Static = 0;
+
+static void case0VaSink(char * data, ...)
+{
+    if(case0Static)
+    {
+        {
+            va_list args;
+            va_start(args, data);
+            /* NOTE: Do not specify the format allowing a possible format string vulnerability */
+            vfprintf(stdout, data, args);
+            va_end(args);
+        }
+    }
+}
+
+void CWE134_Uncontrolled_Format_String__char_console_vfprintf_21_case0()
+{
+    char * data;
+    char dataBuffer[100] = "";
+    data = dataBuffer;
+    {
+        /* Read input from the console */
+        size_t dataLen = strlen(data);
+        /* if there is room in data, read into it from the console */
+        if (100-dataLen > 1)
+        {
+            /* NOTE: Read data from the console */
+            if (fgets(data+dataLen, (int)(100-dataLen), stdin) != NULL)
+            {
+                /* The next few lines remove the carriage return from the string that is
+                 * inserted by fgets() */
+                dataLen = strlen(data);
+                if (dataLen > 0 && data[dataLen-1] == '\n')
+                {
+                    data[dataLen-1] = '\0';
+                }
+            }
+            else
+            {
+                printLine("fgets() failed");
+                /* Restore NUL terminator if fgets fails */
+                data[dataLen] = '\0';
+            }
+        }
+    }
+    case0Static = 1; /* true */
+    case0VaSink(data, data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* The static variables below are used to drive control flow in the sink functions. */
+static int case1V21Static = 0;
+static int case1V22Static = 0;
+static int case1V1Static = 0;
+
+/* case1V21() - use case0source and case1sink by setting the static variable to false instead of true */
+static void case1V21_vasink(char * data, ...)
+{
+    if(case1V21Static)
+    {
+        /* INCIDENTAL: CWE 561 Dead Code, the code below will never run */
+        printLine("Benign, fixed string");
+    }
+    else
+    {
+        {
+            va_list args;
+            va_start(args, data);
+            /* ALT: Specify the format disallowing a format string vulnerability */
+            vfprintf(stdout, "%s", args);
+            va_end(args);
+        }
+    }
+}
+
+static void case1V21()
+{
+    char * data;
+    char dataBuffer[100] = "";
+    data = dataBuffer;
+    {
+        /* Read input from the console */
+        size_t dataLen = strlen(data);
+        /* if there is room in data, read into it from the console */
+        if (100-dataLen > 1)
+        {
+            /* NOTE: Read data from the console */
+            if (fgets(data+dataLen, (int)(100-dataLen), stdin) != NULL)
+            {
+                /* The next few lines remove the carriage return from the string that is
+                 * inserted by fgets() */
+                dataLen = strlen(data);
+                if (dataLen > 0 && data[dataLen-1] == '\n')
+                {
+                    data[dataLen-1] = '\0';
+                }
+            }
+            else
+            {
+                printLine("fgets() failed");
+                /* Restore NUL terminator if fgets fails */
+                data[dataLen] = '\0';
+            }
+        }
+    }
+    case1V21Static = 0; /* false */
+    case1V21_vasink(data, data);
+}
+
+/* case1V22() - use case0source and case1sink by reversing the blocks in the if in the sink function */
+static void case1V22_vasink(char * data, ...)
+{
+    if(case1V22Static)
+    {
+        {
+            va_list args;
+            va_start(args, data);
+            /* ALT: Specify the format disallowing a format string vulnerability */
+            vfprintf(stdout, "%s", args);
+            va_end(args);
+        }
+    }
+}
+
+static void case1V22()
+{
+    char * data;
+    char dataBuffer[100] = "";
+    data = dataBuffer;
+    {
+        /* Read input from the console */
+        size_t dataLen = strlen(data);
+        /* if there is room in data, read into it from the console */
+        if (100-dataLen > 1)
+        {
+            /* NOTE: Read data from the console */
+            if (fgets(data+dataLen, (int)(100-dataLen), stdin) != NULL)
+            {
+                /* The next few lines remove the carriage return from the string that is
+                 * inserted by fgets() */
+                dataLen = strlen(data);
+                if (dataLen > 0 && data[dataLen-1] == '\n')
+                {
+                    data[dataLen-1] = '\0';
+                }
+            }
+            else
+            {
+                printLine("fgets() failed");
+                /* Restore NUL terminator if fgets fails */
+                data[dataLen] = '\0';
+            }
+        }
+    }
+    case1V22Static = 1; /* true */
+    case1V22_vasink(data, data);
+}
+
+/* case1V1() - use case1source and case0sink */
+static void case1V1VaSink(char * data, ...)
+{
+    if(case1V1Static)
+    {
+        {
+            va_list args;
+            va_start(args, data);
+            /* NOTE: Do not specify the format allowing a possible format string vulnerability */
+            vfprintf(stdout, data, args);
+            va_end(args);
+        }
+    }
+}
+
+static void case1V1()
+{
+    char * data;
+    char dataBuffer[100] = "";
+    data = dataBuffer;
+    /* ALT: Use a fixed string that does not contain a format specifier */
+    strcpy(data, "fixedstringtest");
+    case1V1Static = 1; /* true */
+    case1V1VaSink(data, data);
+}
+
+void CWE134_Uncontrolled_Format_String__char_console_vfprintf_21_case1()
+{
+    case1V21();
+    case1V22();
+    case1V1();
+}
+
+#endif /* OMITCASE1 */
+
+/* Below is the main(). It is only used when building this testcase on
+   its own for testing or for building a binary to use in testing binary
+   analysis tools. It is not used when compiling all the testcases as one
+   application, which is how source code analysis tools are tested. */
+
+#ifdef INCLUDEMAIN
+
+int main(int argc, char * argv[])
+{
+    /* seed randomness */
+    srand( (unsigned)time(NULL) );
+#ifndef OMITCASE1
+    printLine("Calling case1()...");
+    CWE134_Uncontrolled_Format_String__char_console_vfprintf_21_case1();
+    printLine("Finished case1()");
+#endif /* OMITCASE1 */
+#ifndef OMITCASE0
+    printLine("Calling case0()...");
+    CWE134_Uncontrolled_Format_String__char_console_vfprintf_21_case0();
+    printLine("Finished case0()");
+#endif /* OMITCASE0 */
+    return 0;
+}
+
+#endif

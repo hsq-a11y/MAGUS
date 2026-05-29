@@ -1,0 +1,32 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE401_Memory_Leak__new_array_wchar_t_81_case0.cpp
+Label Definition File: CWE401_Memory_Leak__new_array.label.xml
+Template File: sources-sinks-81_case0.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 401 Memory Leak
+ * Case0Source:  Allocate data using new[]
+ * Case1Source: Point data to a stack buffer
+ * Sinks:
+ *    Case1Sink: call delete[] on data
+ *    Case0Sink : no deallocation of data
+ * Flow Variant: 81 Data flow: data passed in a parameter to an virtual method called via a reference
+ *
+ * */
+#ifndef OMITCASE0
+
+#include "std_testcase.h"
+#include "CWE401_Memory_Leak__new_array_wchar_t_81.h"
+
+namespace CWE401_Memory_Leak__new_array_wchar_t_81
+{
+
+void CWE401_Memory_Leak__new_array_wchar_t_81_case0::action(wchar_t * data) const
+{
+    /* NOTE: No deallocation */
+    ; /* empty statement needed for some flow variants */
+}
+
+}
+#endif /* OMITCASE0 */

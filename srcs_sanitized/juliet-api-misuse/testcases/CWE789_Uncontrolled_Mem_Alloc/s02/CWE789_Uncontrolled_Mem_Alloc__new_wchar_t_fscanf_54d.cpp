@@ -1,0 +1,61 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE789_Uncontrolled_Mem_Alloc__new_wchar_t_fscanf_54d.cpp
+Label Definition File: CWE789_Uncontrolled_Mem_Alloc__new.label.xml
+Template File: sources-sinks-54d.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 789 Uncontrolled Memory Allocation
+ * Case0Source: fscanf Read data from the console using fscanf()
+ * Case1Source: Small number greater than zero
+ * Sinks:
+ *    Case1Sink: Allocate memory with new [] and check the size of the memory to be allocated
+ *    Case0Sink : Allocate memory with new [], but incorrectly check the size of the memory to be allocated
+ * Flow Variant: 54 Data flow: data passed as an argument from one function through three others to a fifth; all five functions are in different source files
+ *
+ * */
+
+#include "std_testcase.h"
+
+#ifndef _WIN32
+#include <wchar.h>
+#endif
+
+#define HELLO_STRING L"hello"
+
+namespace CWE789_Uncontrolled_Mem_Alloc__new_wchar_t_fscanf_54
+{
+
+#ifndef OMITCASE0
+
+/* case0 function declaration */
+void case0Sink_e(size_t data);
+
+void case0Sink_d(size_t data)
+{
+    case0Sink_e(data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+void case1V1Sink_e(size_t data);
+
+void case1V1Sink_d(size_t data)
+{
+    case1V1Sink_e(data);
+}
+
+/* case1V2 uses the Case0Source with the Case1Sink */
+void case1V2Sink_e(size_t data);
+
+void case1V2Sink_d(size_t data)
+{
+    case1V2Sink_e(data);
+}
+
+#endif /* OMITCASE1 */
+
+} /* close namespace */

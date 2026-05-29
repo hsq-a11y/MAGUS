@@ -1,0 +1,163 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE591_Sensitive_Data_Storage_in_Improperly_Locked_Memory__w32_char_43.cpp
+Label Definition File: CWE591_Sensitive_Data_Storage_in_Improperly_Locked_Memory__w32.label.xml
+Template File: sources-sink-43.tmpl.cpp
+*/
+/*
+ * @description
+ * CWE: 591 Sensitive Data Storage in Improperly Locked Memory
+ * Case0Source:  Allocate memory for sensitive data without using VirtualLock() to lock the buffer into memory
+ * Case1Source: Allocate memory for sensitive data and use VirtualLock() to lock the buffer into memory
+ * Sinks:
+ *    Case0Sink : Authenticate the user using LogonUserA()
+ * Flow Variant: 43 Data flow: data flows using a C++ reference from one function to another in the same source file
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+#include <windows.h>
+
+#pragma comment(lib, "advapi32.lib")
+
+namespace CWE591_Sensitive_Data_Storage_in_Improperly_Locked_Memory__w32_char_43
+{
+
+#ifndef OMITCASE0
+
+static void case0Source(char * &password)
+{
+    password = (char *)malloc(100*sizeof(char));
+    if (password == NULL)
+    {
+        printLine("Memory could not be allocated");
+        exit(1);
+    }
+    /* NOTE: Do not lock the memory */
+    /* INCIDENTAL NOTE: CWE-259 Hardcoded Password */
+    strcpy(password, "Password1234!");
+}
+
+void case0()
+{
+    char * password;
+    /* Initialize Data */
+    password = "";
+    case0Source(password);
+    {
+        HANDLE pHandle;
+        char * username = "User";
+        char * domain = "Domain";
+        /* Use the password in LogonUser() to establish that it is "sensitive" */
+        if (LogonUserA(
+                    username,
+                    domain,
+                    password,
+                    LOGON32_LOGON_NETWORK,
+                    LOGON32_PROVIDER_DEFAULT,
+                    &pHandle) != 0)
+        {
+            printLine("User logged in successfully.");
+            CloseHandle(pHandle);
+        }
+        else
+        {
+            printLine("Unable to login.");
+        }
+        /* NOTE: Sensitive data possibly improperly locked */
+        free(password);
+    }
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1() uses the Case1Source with the Case0Sink */
+static void case1V1Source(char * &password)
+{
+    password = (char *)malloc(100*sizeof(char));
+    if (password == NULL)
+    {
+        printLine("Memory could not be allocated");
+        exit(1);
+    }
+    /* ALT: Use VirtualLock() to lock the buffer into memory */
+    if(!VirtualLock(password, 100*sizeof(char)))
+    {
+        printLine("Memory could not be locked");
+        exit(1);
+    }
+    /* INCIDENTAL NOTE: CWE-259 Hardcoded Password */
+    strcpy(password, "Password1234!");
+}
+
+static void case1V1()
+{
+    char * password;
+    /* Initialize Data */
+    password = "";
+    case1V1Source(password);
+    {
+        HANDLE pHandle;
+        char * username = "User";
+        char * domain = "Domain";
+        /* Use the password in LogonUser() to establish that it is "sensitive" */
+        if (LogonUserA(
+                    username,
+                    domain,
+                    password,
+                    LOGON32_LOGON_NETWORK,
+                    LOGON32_PROVIDER_DEFAULT,
+                    &pHandle) != 0)
+        {
+            printLine("User logged in successfully.");
+            CloseHandle(pHandle);
+        }
+        else
+        {
+            printLine("Unable to login.");
+        }
+        /* NOTE: Sensitive data possibly improperly locked */
+        free(password);
+    }
+}
+
+void case1()
+{
+    case1V1();
+}
+
+#endif /* OMITCASE1 */
+
+} /* close namespace */
+
+/* Below is the main(). It is only used when building this testcase on
+ * its own for testing or for building a binary to use in testing binary
+ * analysis tools. It is not used when compiling all the testcases as one
+ * application, which is how source code analysis tools are tested.
+ */
+
+#ifdef INCLUDEMAIN
+
+using namespace CWE591_Sensitive_Data_Storage_in_Improperly_Locked_Memory__w32_char_43; /* so that we can use case1 and case0 easily */
+
+int main(int argc, char * argv[])
+{
+    /* seed randomness */
+    srand( (unsigned)time(NULL) );
+#ifndef OMITCASE1
+    printLine("Calling case1()...");
+    case1();
+    printLine("Finished case1()");
+#endif /* OMITCASE1 */
+#ifndef OMITCASE0
+    printLine("Calling case0()...");
+    case0();
+    printLine("Finished case0()");
+#endif /* OMITCASE0 */
+    return 0;
+}
+
+#endif

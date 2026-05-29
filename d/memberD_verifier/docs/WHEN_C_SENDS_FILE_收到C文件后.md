@@ -38,6 +38,8 @@ report/<run-name>/verification.report.jsonl
 report/<run-name>/verification.report.md
 ```
 
+`targets.auto.json` / `targets.executable.json` 是运行期间 target 临时文件。Report 成功生成后，正式流程会清理这些文件以及 `targets.cwe*.auto.json` / `targets.cwe*.executable.json` 快照；最终保留 D output 和 report 目录。
+
 `report/<run-name>/verification.report.jsonl` / `report/<run-name>/verification.report.md` 是最终漏洞报告，汇总 D `verification.jsonl` 中的 reportable 记录：D `confirmed`，以及 D 明确返回 `UNSUPPORTED_ORACLE` 时保留的 `P0`/`P1` `stage_c_preserved`。`P2 + UNSUPPORTED_ORACLE` 留在 `verification.failed.jsonl`。`<run-name>` 优先来自 D 输出中的唯一 CWE 源码目录名，没有唯一 CWE 目录时取唯一 `project_id`；也可以用 `REPORT_RUN_NAME=<name>` 显式指定。每条报告包含漏洞位置（文件路径、行号、route）、漏洞类型、风险等级、触发条件、运行证据和 payload/plan 引用。
 
 如果自动 target 没有可执行上下文，可以在同目录补一个显式 sidecar：

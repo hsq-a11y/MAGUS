@@ -1,0 +1,50 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE114_Process_Control__w32_char_environment_82.h
+Label Definition File: CWE114_Process_Control__w32.label.xml
+Template File: sources-sink-82.tmpl.h
+*/
+/*
+ * @description
+ * CWE: 114 Process Control
+ * Case0Source: environment Read input from an environment variable
+ * Case1Source: Hard code the full pathname to the library
+ *    Case0Sink : Load a dynamic link library
+ * Flow Variant: 82 Data flow: data passed in a parameter to an virtual method called via a pointer
+ *
+ * */
+
+#include "std_testcase.h"
+
+#include <wchar.h>
+
+namespace CWE114_Process_Control__w32_char_environment_82
+{
+
+class CWE114_Process_Control__w32_char_environment_82_base
+{
+public:
+    /* pure virtual function */
+    virtual void action(char * data) = 0;
+};
+
+#ifndef OMITCASE0
+
+class CWE114_Process_Control__w32_char_environment_82_case0 : public CWE114_Process_Control__w32_char_environment_82_base
+{
+public:
+    void action(char * data);
+};
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+class CWE114_Process_Control__w32_char_environment_82_case1V1 : public CWE114_Process_Control__w32_char_environment_82_base
+{
+public:
+    void action(char * data);
+};
+
+#endif /* OMITCASE1 */
+
+}

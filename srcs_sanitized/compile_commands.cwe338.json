@@ -1,0 +1,344 @@
+[
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_01.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_01.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_02.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_02.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_03.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_03.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_04.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_04.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_05.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_05.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_06.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_06.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_07.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_07.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_08.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_08.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_09.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_09.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_10.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_10.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_11.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_11.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_12.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_12.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_13.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_13.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_14.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_14.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_15.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_15.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_16.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_16.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_17.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_17.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_18.c",
+    "arguments": [
+      "clang",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/CWE338_Weak_PRNG__w32_18.c",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  },
+  {
+    "directory": "/home/sq_hu/MAGUS/srcs_sanitized",
+    "file": "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/main.cpp",
+    "arguments": [
+      "clang++",
+      "-D_WIN32",
+      "-I",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim",
+      "-I",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcasesupport",
+      "-include",
+      "/home/sq_hu/MAGUS/tools/juliet_win_shim/juliet_win_compat.h",
+      "-c",
+      "/home/sq_hu/MAGUS/srcs_sanitized/juliet-api-misuse/testcases/CWE338_Weak_PRNG/main.cpp",
+      "-o",
+      "/tmp/magus-unused.o"
+    ]
+  }
+]

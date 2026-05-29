@@ -1,0 +1,40 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE122_Heap_Based_Buffer_Overflow__sizeof_struct_65b.c
+Label Definition File: CWE122_Heap_Based_Buffer_Overflow__sizeof.label.xml
+Template File: sources-sink-65b.tmpl.c
+*/
+/*
+ * @description
+ * CWE: 122 Heap Based Buffer Overflow
+ * Case0Source:  Initialize the source buffer using the size of a pointer
+ * Case1Source: Initialize the source buffer using the size of the DataElementType
+ * Sinks:
+ *    Case0Sink : Print then free data
+ * Flow Variant: 65 Data/control flow: data passed as an argument from one function to a function in a different source file called via a function pointer
+ *
+ * */
+
+#include "std_testcase.h"
+
+#ifndef OMITCASE0
+
+void CWE122_Heap_Based_Buffer_Overflow__sizeof_struct_65b_case0Sink(twoIntsStruct * data)
+{
+    /* NOTE: Attempt to use data, which may not have enough memory allocated */
+    printStructLine(data);
+    free(data);
+}
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+/* case1V1 uses the Case1Source with the Case0Sink */
+void CWE122_Heap_Based_Buffer_Overflow__sizeof_struct_65b_case1V1Sink(twoIntsStruct * data)
+{
+    /* NOTE: Attempt to use data, which may not have enough memory allocated */
+    printStructLine(data);
+    free(data);
+}
+
+#endif /* OMITCASE1 */

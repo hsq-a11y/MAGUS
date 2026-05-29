@@ -138,11 +138,16 @@ D 的批处理和流式模式共用输出锁：
 
 D 当前只使用 Python 标准库；`../01_demo_test/01_setup_linux.sh` 在没有真实 requirements 依赖时会创建不带 pip 的 `.venv`。
 
-输出：
+运行期间生成的 target JSON：
 
 ```text
 targets.auto.json
 targets.executable.json  # only when an explicit sidecar is supplied
+```
+
+Report 成功生成后，脚本会清理这些临时 target JSON，包括历史或批次命名的 `targets.cwe*.auto.json` / `targets.cwe*.executable.json` 快照。保留输出：
+
+```text
 output/payloads/*.payload.py
 output/payloads/*.api-plan.json
 output/verification.jsonl

@@ -1,0 +1,60 @@
+/* TEMPLATE GENERATED TESTCASE FILE
+Filename: CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81.h
+Label Definition File: CWE134_Uncontrolled_Format_String.vasinks.label.xml
+Template File: sources-vasinks-81.tmpl.h
+*/
+/*
+ * @description
+ * CWE: 134 Uncontrolled Format String
+ * Case0Source: console Read input from the console
+ * Case1Source: Copy a fixed string into data
+ * Sinks: vfprintf
+ *    Case1Sink: vfwprintf with a format string
+ *    Case0Sink : vfwprintf without a format string
+ * Flow Variant: 81 Data flow: data passed in a parameter to an virtual method called via a reference
+ *
+ * */
+
+#include "std_testcase.h"
+
+#ifndef _WIN32
+#include <wchar.h>
+#endif
+
+namespace CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81
+{
+
+class CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_base
+{
+public:
+    /* pure virtual function */
+    virtual void action(wchar_t * data) const = 0;
+};
+
+#ifndef OMITCASE0
+
+class CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_case0 : public CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_base
+{
+public:
+    void action(wchar_t * data) const;
+};
+
+#endif /* OMITCASE0 */
+
+#ifndef OMITCASE1
+
+class CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_case1V1 : public CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_base
+{
+public:
+    void action(wchar_t * data) const;
+};
+
+class CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_case1V2 : public CWE134_Uncontrolled_Format_String__wchar_t_console_vfprintf_81_base
+{
+public:
+    void action(wchar_t * data) const;
+};
+
+#endif /* OMITCASE1 */
+
+}
